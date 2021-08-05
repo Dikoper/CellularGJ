@@ -1,5 +1,20 @@
+/*
+	GOOD EXAMPLES:
+	-basic_game_template(базовый шаблон)
+    -core2D_camera_platformer(следящая камера)
+    -core_sorage_value(сохрвненние данных в файл)
+    -shaders_spotlight(освещение объекта через альфа канал)
+    -shapes_collision_area
+    -texture_background_scrolling
+    -texture_bunnymark
+    -texture_draw_tiled
+    -texture_particle_blending
+    -textures_rectangle
+*/
+
+
 #include <stdio.h>
-#include "raylib.h"
+#include "raymath.h"
 
 int main(void)
 {
@@ -10,24 +25,28 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(30);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+	while (!WindowShouldClose())    // Detect window close button or ESC key
+	{
+		// Update
+		//----------------------------------------------------------------------------------
+		// TODO: Update your variables here
+		float _t = 128 * sinf(GetTime());
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
+		Color clr = (Color){ 128 + _t, 128 + _t, 128 - _t, 255};
+		//----------------------------------------------------------------------------------
 
-        ClearBackground(RAYWHITE);
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
+
+		ClearBackground(clr);
 
         DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+		DrawFPS(0,0);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
