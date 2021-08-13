@@ -1,0 +1,231 @@
+/******************************************************************************
+*
+*   CelluLar game by Dikoper & Mikl
+*
+*   Press
+*       Enter to randomize the cells
+*       Space to pause/unpause
+*       G to pass one generation (if paused)
+*       F1 to turn on/off the FPS counter
+*       Q to quit (I'm just used to having this while testing)
+*
+******************************************************************************/
+#include "raylib.h"
+#define RAYGUI_IMPLEMENTATION 
+#define RAYGUI_SUPPORT_ICONS
+#include "raygui.h"
+
+#include "./Headers/screens.h"
+
+//----------------------------------------------------------------------------------
+// Shared Variables Definition (global)
+//----------------------------------------------------------------------------------
+GameScreen currentScreen = 0;
+Font font = { 0 };
+Music music = { 0 };
+Sound fxCoin = { 0 };
+const char* GAME_TITLE = "Cellular game";
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition (local to this module)
+//----------------------------------------------------------------------------------
+static const int screenWidth = 1280;
+static const int screenHeight = 720;
+
+// Required variables to manage screen transitions (fade-in, fade-out)
+static float transAlpha = 0.0f;
+static bool onTransition = false;
+static bool transFadeOut = false;
+static int transFromScreen = -1;
+static int transToScreen = -1;
+
+//----------------------------------------------------------------------------------
+// Local Functions Declaration
+//----------------------------------------------------------------------------------
+static void UpdateDrawFrame(void);          // Update and draw one frame
+static void ScreenUpdater(GameScreen gs);
+static void ChangeToScreen(int screen);     // Change to screen, no transition effect
+static void TransitionToScreen(int screen); // Request transition to next screen
+static void UpdateTransition(void);         // Update transition effect
+static void DrawTransition(void);           // Draw transition effect (full-screen rectangle)
+//----------------------------------------------------------------------------------
+// Main entry point
+//----------------------------------------------------------------------------------
+int main(void)
+{
+    // Initialization
+    //---------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, GAME_TITLE);
+
+    InitAudioDevice();      // Initialize audio device
+    font = LoadFont("Resources/Fonts/mecha.png");
+    currentScreen = TITLE;
+    InitTitleScreen();
+
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        UpdateDrawFrame();
+    }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    // Unload current screen data before closing
+    switch (currentScreen)
+    {
+        case TITLE: UnloadTitleScreen(); break;
+        case GAMEPLAY: UnloadGameplayScreen(); break;
+    default: break;
+    }
+
+    // Unload all global loaded data (i.e. fonts) here!
+    UnloadFont(font);
+    UnloadMusicStream(music);
+    UnloadSound(fxCoin);
+
+    CloseAudioDevice();     // Close audio context
+
+    CloseWindow();          // Close window and OpenGL context
+
+    return 0;
+}
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
+
+// Update and draw game frame
+static void UpdateDrawFrame(void)
+{
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+
+    ScreenUpdater(currentScreen);
+
+    switch (currentScreen)
+    {
+        case TITLE: DrawTitleScreen(); break;
+        case GAMEPLAY: DrawGameplayScreen(); break;
+        default: break;
+    }
+
+    if (onTransition) DrawTransition();
+
+    EndDrawing();
+}
+
+static void ScreenUpdater(GameScreen gs)
+{
+    if (!onTransition)
+    {
+        switch (currentScreen)
+        {
+            case TITLE:
+            {
+                UpdateTitleScreen();
+
+                if (FinishTitleScreen() == 1) TransitionToScreen(OPTIONS);
+                else if (FinishTitleScreen() == 2) TransitionToScreen(GAMEPLAY);
+
+            } break;
+            case GAMEPLAY:
+            {
+                UpdateGameplayScreen();
+
+                if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
+                //else if (FinishGameplayScreen() == 2) TransitionToScreen(TITLE);
+
+            } break;
+            default: break;
+        }
+    }
+    else UpdateTransition();    // Update transition (fade-in, fade-out)
+}
+
+// Change to next screen, no transition
+static void ChangeToScreen(int screen)
+{
+    // Unload current screen
+    switch (currentScreen)
+    {
+        case TITLE: UnloadTitleScreen(); break;
+        case GAMEPLAY: UnloadGameplayScreen(); break;
+        default: break;
+    }
+
+    // Init next screen
+    switch (screen)
+    {
+        case TITLE: InitTitleScreen(); break;
+        case GAMEPLAY: InitGameplayScreen(); break;
+        default: break;
+    }
+
+    currentScreen = screen;
+}
+
+// Request transition to next screen
+static void TransitionToScreen(int screen)
+{
+    onTransition = true;
+    transFadeOut = false;
+    transFromScreen = currentScreen;
+    transToScreen = screen;
+    transAlpha = 0.0f;
+}
+
+// Update transition effect
+static void UpdateTransition(void)
+{
+    if (!transFadeOut)
+    {
+        transAlpha += 0.05f;
+
+        // NOTE: Due to float internal representation, condition jumps on 1.0f instead of 1.05f
+        // For that reason we compare against 1.01f, to avoid last frame loading stop
+        if (transAlpha > 1.01f)
+        {
+            transAlpha = 1.0f;
+
+            // Unload current screen
+            switch (transFromScreen)
+            {
+                case TITLE: UnloadTitleScreen(); break;
+                case GAMEPLAY: UnloadGameplayScreen(); break;
+                default: break;
+            }
+
+            // Load next screen
+            switch (transToScreen)
+            {
+                case TITLE: InitTitleScreen(); break;
+                case GAMEPLAY: InitGameplayScreen(); break;
+                default: break;
+            }
+
+            currentScreen = transToScreen;
+
+            // Activate fade out effect to next loaded screen
+            transFadeOut = true;
+        }
+    }
+    else  // Transition fade out logic
+    {
+        transAlpha -= 0.02f;
+
+        if (transAlpha < -0.01f)
+        {
+            transAlpha = 0.0f;
+            transFadeOut = false;
+            onTransition = false;
+            transFromScreen = -1;
+            transToScreen = -1;
+        }
+    }
+}
+
+// Draw transition effect (full-screen rectangle)
+static void DrawTransition(void)
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, transAlpha));
+}

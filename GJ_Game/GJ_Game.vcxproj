@@ -125,6 +125,8 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\..\Vendors\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
       <EnablePREfast>true</EnablePREfast>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +146,8 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\..\Vendors\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
       <EnablePREfast>true</EnablePREfast>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,7 +159,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.c" />
+    <ClCompile Include="Sources\main.c" />
+    <ClCompile Include="Sources\Screens\game_screen.c" />
+    <ClCompile Include="Sources\Screens\main_menu_screen.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Sources\Headers\extensions.h" />
+    <ClInclude Include="Sources\Headers\screens.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
