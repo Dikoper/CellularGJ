@@ -27,6 +27,9 @@
     <ClCompile Include="Sources\Screens\main_menu_screen.c">
       <Filter>Source Files\Screens</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Screens\set_up_screen.c">
+      <Filter>Source Files\Screens</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sources\Headers\extensions.h">

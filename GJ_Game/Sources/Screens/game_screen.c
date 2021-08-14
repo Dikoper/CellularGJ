@@ -6,8 +6,11 @@
 
 #include "raylib.h"
 #include "../Headers/screens.h"
+#include "../Headers/extensions.h"
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
+#include <string.h>
+
 
 //----------------------------------------------------------------------------------
 // Module Variables Definition (local)
@@ -21,12 +24,10 @@ static int finishScreen = 0;
 #define GW 48*m     // grid width
 #define GH 32*m     // grid height
 
-static int screenWidth = GW * CS;
-static int screenHeight = GH * CS;
 static Vector2 screenCentre;
 
 static bool paused = false;
-
+// TODO: rewrite buffer stuff
 static int prev_buf = 0;    // to alternate between cell buffers //TODO: rewrite this shit
 static int curr_buf = 1;
 
@@ -44,26 +45,47 @@ static bool running;
 RenderTexture2D rt2D;
 RenderTexture2D guiRT;
 
+RuleAttrib stay_rule, birth_rule; // TODO: upgrade rules stuff
+
 static float renderScale = 1.0f;
 
-//static struct Rule {
-//    int[] n = { 8 };//read about arrays!
-//};
+///
+/// make buffer for both human and virus cells(prev, current)
+/// cell type (char) 0,1,2,3...
+///
 
 //----------------------------------------------------------------------------------
 // Gameplay Functions Definition
 //----------------------------------------------------------------------------------
 
-void StayBHV(int* cell, int prev, int neighbors, int attrib_1, int attrib_2)
+void StayBHV(int* cell, int prev, int neighbors, RuleAttrib ra)
 {
-	if ((neighbors >= attrib_1) && (neighbors <= attrib_2)) // stay
-		*cell = prev;
+    for (int i=0; i < NEIGHBORS_COUNT; ++i)
+    {
+        if (ra[i] == 1)
+        {
+            if (i == neighbors)
+            {
+                *cell = prev;
+                break;
+            }
+        }
+    }
 }
 
-void BirthBHV(int* cell, int prev, int neighbors, int attrib_1, int attrib_2)
+void BirthBHV(int* cell, int prev, int neighbors, RuleAttrib ra)
 {
-	if ((neighbors >= attrib_1) && (neighbors <= attrib_2)) // birth ( is this needed? ->!cells[prev_buf][j][i] &&)
-		*cell = 1;
+    for (int i = 0; i < NEIGHBORS_COUNT; ++i)
+    {
+        if (ra[i] == 1)
+        {
+            if (i == neighbors)
+            {
+                *cell = 1;
+                break;
+            }
+        }
+    }
 }
 
 void RandomizeCells() {
@@ -119,10 +141,48 @@ void PassGeneration() {
             int* prev_cell = &cells[prev_buf][j][i];
 
             Vector4 rule = { 2,3,3,3 };
+            //stay_rule = {0,0,0,0,0,0,0,0,0};
+            //stay_rule = (RuleAttrib){ 0,0,1,1 };
+            //birth_rule = (RuleAttrib){ 0,0,0,1 };
 
-            StayBHV(curr_cell, *prev_cell, n, rule.x, rule.y);
+            StayBHV(curr_cell, *prev_cell, n, stay_rule);
 
-            BirthBHV(curr_cell, *prev_cell, n, rule.z, rule.w);
+            BirthBHV(curr_cell, *prev_cell, n, birth_rule);
+        }
+    }
+}
+
+void SpawnFigure(Vector2 pos)
+{
+    int figure[16] = 
+    {
+        0,1,0,0,
+        0,0,1,0,
+        1,1,1,0,
+        0,0,0,0
+    };
+
+    for (size_t i = 0, n=0; i < 4; i++)
+    {
+        for (size_t j = 0; j < 4; j++)
+        {
+            cells[0][(int)pos.x + i][(int)pos.y + j] = figure[n];
+            cells[1][(int)pos.x + i][(int)pos.y + j] = figure[n];
+            ++n;
+        }
+    }
+
+}
+
+void WipeGrid(int wiper)
+{
+    prev_buf = 1 - prev_buf;      // switch buffers
+    curr_buf = 1 - curr_buf;
+
+    for (int j = 0; j < GH; j++) {
+        for (int i = 0; i < GW; i++) {
+            // set cell according to rules
+            cells[curr_buf][j][i] = wiper;
         }
     }
 }
@@ -137,6 +197,9 @@ void InitGameplayScreen(void)
     // TODO: Initialize GAMEPLAY screen variables here!
     framesCounter = 0;
     finishScreen = 0;
+
+    int screenWidth = GW * CS;
+    int screenHeight = GH * CS;
 
     // set window size according to grid and cell sizes
     screenCentre = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
@@ -225,13 +288,37 @@ void RenderGridToTexture(RenderTexture2D rt)
 void RenderGUI() 
 {
     //ClearBackground(BLACK);
-    GuiPanel((Rectangle) { 0, 0, 300, screenHeight });
+    //GuiPanel((Rectangle) { 0, 0, 300, screenHeight });
     //if (GuiButton((Rectangle) { 10, 100, 100, 120 }, "#152#"))
         // SpawnFigure(0, 0);
     
     paused = GuiToggle((Rectangle) { 30, 30, 120, 60 }, "#132#", paused);
     if (GuiButton((Rectangle) { 30, 90, 120, 60 }, "#134#"))
         PassGeneration();
+
+    if (GuiButton((Rectangle) { 30, 150, 120, 60 }, "#79#"))
+        WipeGrid(0);
+
+    if (GuiButton((Rectangle) { 30, 210, 120, 60 }, "#152#"))
+        SpawnFigure((Vector2) {GW/2,GH/2});
+
+    char s_str[10] = { 0 }, b_str[10] = {0};
+    
+    for (int i = 0; i < NEIGHBORS_COUNT; ++i) 
+    {
+        // TODO: rewrite for values more that 1 (0,1,2,3...)
+        if (stay_rule[i] == 1) 
+        {
+            strcat_s(s_str, sizeof(s_str), TextFormat("%d", i));
+        }
+        if (birth_rule[i] == 1)
+        {
+            strcat_s(b_str, sizeof(b_str), TextFormat("%d", i));
+        }
+    }
+
+    DrawText(s_str, 250, 10, 28, RED);
+    DrawText(b_str, 250, 30, 28, BLUE);
 
     DrawFPS(10, 10);
 }
@@ -250,8 +337,6 @@ void DrawGameplayScreen(void)
     EndMode2D();
     
     RenderGUI();
-
-
 }
 
 // Gameplay Screen Unload logic

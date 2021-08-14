@@ -6,10 +6,12 @@
 #ifndef SCREENS_H
 #define SCREENS_H
 
+#define SCREEN_CENTRE (Vector2){GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum GameScreen { LOGO = 0, TITLE, OPTIONS, GAMEPLAY, ENDING } GameScreen;
+typedef enum GameScreen { LOGO = 0, TITLE, OPTIONS, SETUP, GAMEPLAY, ENDING } GameScreen;
 
 //----------------------------------------------------------------------------------
 // Global Variables Declaration (shared by several modules)
@@ -46,6 +48,15 @@ extern const char* GAME_TITLE;
     void DrawOptionsScreen(void);
     void UnloadOptionsScreen(void);
     int FinishOptionsScreen(void);
+
+//----------------------------------------------------------------------------------
+// Setup Screen Functions Declaration
+//----------------------------------------------------------------------------------
+    void InitSetupScreen(void);
+    void UpdateSetupScreen(void);
+    void DrawSetupScreen(void);
+    void UnloadSetupScreen(void);
+    int FinishSetupScreen(void);
 
 //----------------------------------------------------------------------------------
 // Gameplay Screen Functions Declaration

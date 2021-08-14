@@ -56,12 +56,11 @@ int main(void)
     // Initialization
     //---------------------------------------------------------
     InitWindow(screenWidth, screenHeight, GAME_TITLE);
-
+    SetExitKey(KEY_PAUSE);
     InitAudioDevice();      // Initialize audio device
     font = LoadFont("Resources/Fonts/mecha.png");
     currentScreen = TITLE;
     InitTitleScreen();
-
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -75,6 +74,7 @@ int main(void)
     {
         case TITLE: UnloadTitleScreen(); break;
         case GAMEPLAY: UnloadGameplayScreen(); break;
+        case SETUP: UnloadSetupScreen(); break;
     default: break;
     }
 
@@ -106,6 +106,7 @@ static void UpdateDrawFrame(void)
     {
         case TITLE: DrawTitleScreen(); break;
         case GAMEPLAY: DrawGameplayScreen(); break;
+        case SETUP: DrawSetupScreen(); break;
         default: break;
     }
 
@@ -118,22 +119,31 @@ static void ScreenUpdater(GameScreen gs)
 {
     if (!onTransition)
     {
-        switch (currentScreen)
+        switch (gs)
         {
             case TITLE:
             {
                 UpdateTitleScreen();
 
-                if (FinishTitleScreen() == 1) TransitionToScreen(OPTIONS);
-                else if (FinishTitleScreen() == 2) TransitionToScreen(GAMEPLAY);
+                //if (FinishTitleScreen() == 1) TransitionToScreen(OPTIONS);
+                //else 
+                if (FinishTitleScreen() == 2) TransitionToScreen(SETUP);
+
+            } break;
+            case SETUP:
+            {
+                UpdateSetupScreen();
+
+                if (FinishSetupScreen() == 1) TransitionToScreen(GAMEPLAY);
 
             } break;
             case GAMEPLAY:
             {
                 UpdateGameplayScreen();
 
-                if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
-                //else if (FinishGameplayScreen() == 2) TransitionToScreen(TITLE);
+                //if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
+                //else 
+                if (FinishGameplayScreen() == 1) TransitionToScreen(TITLE);
 
             } break;
             default: break;
@@ -150,6 +160,7 @@ static void ChangeToScreen(int screen)
     {
         case TITLE: UnloadTitleScreen(); break;
         case GAMEPLAY: UnloadGameplayScreen(); break;
+        case SETUP: UnloadSetupScreen(); break;
         default: break;
     }
 
@@ -158,6 +169,7 @@ static void ChangeToScreen(int screen)
     {
         case TITLE: InitTitleScreen(); break;
         case GAMEPLAY: InitGameplayScreen(); break;
+        case SETUP: InitSetupScreen(); break;
         default: break;
     }
 
@@ -192,6 +204,7 @@ static void UpdateTransition(void)
             {
                 case TITLE: UnloadTitleScreen(); break;
                 case GAMEPLAY: UnloadGameplayScreen(); break;
+                case SETUP: UnloadSetupScreen(); break;
                 default: break;
             }
 
@@ -200,6 +213,7 @@ static void UpdateTransition(void)
             {
                 case TITLE: InitTitleScreen(); break;
                 case GAMEPLAY: InitGameplayScreen(); break;
+                case SETUP: InitSetupScreen(); break;
                 default: break;
             }
 

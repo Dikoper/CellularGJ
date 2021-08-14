@@ -1567,7 +1567,7 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
     bool pressed = false;
 
     char textValue[VALUEBOX_MAX_CHARS + 1] = "\0";
-    sprintf_s(textValue, "%i", *value);
+    sprintf(textValue, "%i", *value);
 
     Rectangle textBounds = { 0 };
     if (text != NULL)
