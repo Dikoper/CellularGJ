@@ -19,7 +19,7 @@ enum CellType
 };
 
 typedef int RuleAttrib[NEIGHBORS_COUNT]; //zero index is the root(centre) cell
-extern RuleAttrib stay_rule, birth_rule, kill_rule;
+extern RuleAttrib stay_rule, birth_rule;
 
 //typedef struct Rule {
 //    RuleAttrib attribs;
@@ -98,21 +98,6 @@ static void BirthBHV(int* cell, int prev, int* neighbors, RuleAttrib ra)
             {
                 *cell = (n_count[PLAYER_CELL] >= n_count[ENEMY_CELL]) ?
                                          PLAYER_CELL : ENEMY_CELL;
-                break;
-            }
-        }
-    }
-}
-
-static void KillBHV(int* cell, int prev, int* neighbors, RuleAttrib ra)
-{
-    for (int i = 0; i < NEIGHBORS_COUNT; ++i)
-    {
-        if (ra[i] == PLAYER_CELL)
-        {
-            if (i == neighbors[i])
-            {
-                *cell = 1;
                 break;
             }
         }

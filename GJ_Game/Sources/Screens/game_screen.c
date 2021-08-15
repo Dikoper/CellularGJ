@@ -24,7 +24,10 @@ static int finishScreen = 0;
 #define GW 48*m     // grid width
 #define GH 32*m     // grid height
 
-#define TICKRATE 15 // update grid 15 times in a second
+#define TICKRATE 1000/5/1000 // update grid 5 times in a second
+
+double lastTick;
+size_t ticksCount;
 
 static Vector2 screenCentre;
 
@@ -50,7 +53,7 @@ static float renderScale = 1.0f;
 RenderTexture2D rt2D;
 RenderTexture2D guiRT;
 
-RuleAttrib stay_rule, birth_rule, kill_rule; // TODO: upgrade rules stuff
+RuleAttrib stay_rule, birth_rule; // TODO: upgrade rules stuff
 
 static int nb[NEIGHBORS_COUNT] = {0};
 
@@ -211,7 +214,7 @@ void SpawnFigure(int x, int y)
     {
         for (size_t i = 0; i < sqrt(SIZE); i++)
         {
-            int indx = (y + j) * GW + x + i;
+            size_t indx = (y + j) * GW + x + i;
             nextState[indx] = figure[n];
             currentState[indx] = figure[n];
             ++n;
@@ -254,7 +257,7 @@ void InitGameplayScreen(void)
 
     // TODO : remember to free mem
     if (nextState == NULL || currentState == NULL)
-        return 1;
+        TraceLog(LOG_ERROR, "Cannot allocate memory for buffers");
 
     /*int testBuff[9] =
     {
@@ -270,7 +273,7 @@ void InitGameplayScreen(void)
     screenCentre = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
     SetWindowSize(screenWidth, screenHeight);
 
-    SetTargetFPS(30);
+    SetTargetFPS(60);
 
     InitCells();
     // set virtual camera
@@ -304,7 +307,6 @@ void UpdateGameplayScreen(void)
     
     if (IsKeyPressed(KEY_C))
         CellsCount(currentState, (sizeof(currentState) / sizeof(currentState[0])));
-    
     // Camera zoom controls
     if ((GetMouseWheelMove() > 0.1f))
     {
@@ -318,13 +320,21 @@ void UpdateGameplayScreen(void)
     if (camera.zoom > 10.0f) camera.zoom = 10.0f;
     else if (camera.zoom < 0.1f) camera.zoom = 0.1f;
 
-    if (paused) {
+    if (paused) 
+    {
         if (IsKeyPressed(KEY_G))
             PassGeneration();
     }
-    else {
-        PassGeneration();
+    else
+    {
+        if (GetTime() - lastTick > TICKRATE)
+        {
+            PassGeneration();
+            lastTick = GetTime();
+            ticksCount++;
+        }   
     }
+
 
 }
 
@@ -387,6 +397,8 @@ void RenderGUI()
 
     DrawText(s_str, 250, 10, 28, RED);
     DrawText(b_str, 250, 30, 28, BLUE);
+
+    DrawText(TextFormat("Epoch - %d", ticksCount), 500, 10, 28, RAYWHITE);
 
     DrawFPS(10, 10);
 }

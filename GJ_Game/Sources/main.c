@@ -55,6 +55,7 @@ int main(void)
 {
     // Initialization
     //---------------------------------------------------------
+
     InitWindow(screenWidth, screenHeight, GAME_TITLE);
     SetExitKey(KEY_PAUSE);
     InitAudioDevice();      // Initialize audio device
@@ -191,7 +192,7 @@ static void UpdateTransition(void)
 {
     if (!transFadeOut)
     {
-        transAlpha += 0.05f;
+        transAlpha += 0.5f;
 
         // NOTE: Due to float internal representation, condition jumps on 1.0f instead of 1.05f
         // For that reason we compare against 1.01f, to avoid last frame loading stop
@@ -225,7 +226,7 @@ static void UpdateTransition(void)
     }
     else  // Transition fade out logic
     {
-        transAlpha -= 0.02f;
+        transAlpha -= 0.2f;
 
         if (transAlpha < -0.01f)
         {
@@ -242,4 +243,5 @@ static void UpdateTransition(void)
 static void DrawTransition(void)
 {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, transAlpha));
+
 }

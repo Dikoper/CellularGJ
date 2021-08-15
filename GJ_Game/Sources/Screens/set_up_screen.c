@@ -16,7 +16,7 @@ static int finishScreen = 0;
 
 int val = 0;
 
-RuleAttrib stay_rule, birth_rule, kill_rule;
+RuleAttrib stay_rule, birth_rule;
 
 //----------------------------------------------------------------------------------
 // Setup Screen Functions Definition
@@ -54,11 +54,7 @@ void DrawSetupScreen(void)
         GuiSpinner((Rectangle) { 20 + i * 120, 25, 100, 25 }, TextFormat("b%d", i), &birth_rule[i], 0, 2, false);
     }
 
-    //kill
-    for (int i = 0; i < NEIGHBORS_COUNT; ++i)
-    {
-        GuiSpinner((Rectangle) { 20 + i * 120, 50, 100, 25 }, TextFormat("k%d", i), &kill_rule[i], 0, 2, false);
-    }
+    GuiGroupBox((Rectangle) { 10, 100, 250, 400 }, "Figure");
 
     const char* controlsText =
         "Game controls :"
