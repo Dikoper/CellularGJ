@@ -31,23 +31,12 @@ static bool paused = false;
 static int prev_buf = 0;    // to alternate between cell buffers //TODO: rewrite this shit
 static int curr_buf = 1;
 
-static int pad;    // add a padding space around cells (just to look nicer)
+static int pad;    // add a padding space around cells (just to look nicer) ?
 static int pad2;
 
-static int cells[2][GH][GW]; // move to 1D buffers
-
-//cells buffers(1-player, 2-enemy)
-//static int* nextState;
-//static int* currCellsBuffer2;
-//static int* currentState;
-//static int* prevCellsBuffer2;
-
+// TODO: unite in one buffer to get rid of memcopy
 static int nextState[GH * GW];
 static int currentState[GH * GW];
-static int currCellsBuffer2[GH * GW];
-static int prevCellsBuffer2[GH * GW];
-
-
 
 static Camera2D camera;
 static Vector2 tx_v;
@@ -63,18 +52,12 @@ RuleAttrib stay_rule, birth_rule, kill_rule; // TODO: upgrade rules stuff
 
 static int nb[NEIGHBORS_COUNT] = {0};
 
-///
-/// make buffer for both human and virus cells(prev, current)
-/// cell type (char) 0,1,2,3...
-///
-
 //----------------------------------------------------------------------------------
 // Gameplay Functions Definition
 //----------------------------------------------------------------------------------
 
-void RandomizeCells() {
-    // [i][j] index = [i * GH + j]  i*(max of j)+j
-
+void RandomizeCells() 
+{
     for (int i = 0; i < GH; i++) {
         for (int j = 0; j < GW; j++) {
             int rnd = GetRandomValue(0, 2);
@@ -86,6 +69,7 @@ void RandomizeCells() {
 }
 
 void InitCells() {
+    // Am i need this?
     pad = 1;        // top and left padding
     pad2 = pad * 2;   // bottom and right padding
 
@@ -97,23 +81,18 @@ void InitCells() {
     RandomizeCells();
 }
 
-size_t CoordsToIndex(int x, int y) // TODO: rewrite with macro
+int WarpCoord(int x, int y, Vector2 size)
 {
-    return x * GH + y;
-}
-
-int WarpCoord(int x, int y, Vector2 warp)
-{
-    if (y >= warp.y) 
+    if (y >= size.y) 
         y = 0;
-    if (x >= warp.x) 
+    if (x >= size.x)
         x = 0;
     if (y < 0) 
-        y = warp.y - 1;
+        y = size.y - 1;
     if (x < 0) 
-        x = warp.x - 1;
+        x = size.x - 1;
 
-    int idx = y * GH + x;
+    int idx = y * GW + x;
 
     return idx;
 }
@@ -131,10 +110,6 @@ int* GetNeighbors(int* buffer, Vector2 pos, int *out, Vector2 warp)
 
     int y = (int)pos.x;
     int x = (int)pos.y;
-
-    //int _i, _j, n = 1;
-
-    //int i = -1, j = -1;
 
     //while (i < 2)
     //{
@@ -172,13 +147,8 @@ int* GetNeighbors(int* buffer, Vector2 pos, int *out, Vector2 warp)
     //}
 
     //warp
-    
-    int bf;
-    bf = buffer[8];
 
-    bf = buffer[WarpCoord(x, y, warp)];
-    out[0] = bf;
-
+    out[0] = buffer[WarpCoord(x, y, warp)];
     out[1] = buffer[WarpCoord(x -1, y-1, warp)];
     out[2] = buffer[WarpCoord(x, y-1, warp)];
     out[3] = buffer[WarpCoord(x+1, y-1, warp)];
@@ -188,21 +158,6 @@ int* GetNeighbors(int* buffer, Vector2 pos, int *out, Vector2 warp)
     out[7] = buffer[WarpCoord(x, y+1, warp)];
     out[8] = buffer[WarpCoord(x+1, y + 1, warp)];
 
-    //for (size_t i = 0, n = 0; i < 3; i++)
-    //{
-    //    for (size_t j = 0; j < 3; j++)
-    //    {
-    // 
-    //        int j_ = j - 1 >= 0 ? j - 1 : GH - 1;
-    //        int _j = j + 1 < GH ? j + 1 : 0;
-    //        int i_ = i - 1 >= 0 ? i - 1 : GW - 1;
-    //        int _i = i + 1 < GW ? i + 1 : 0;
-
-    //        // count alive neighbors
-    //        
-    //    }
-    //}
-
     return out;
 }
 
@@ -210,26 +165,13 @@ void PassGeneration() {
     prev_buf = 1 - prev_buf;      // switch buffers
     curr_buf = 1 - curr_buf;
 
-    for (int j = 0; j < GH; j++) {
-        for (int i = 0; i < GW; i++) {
+    for (int j = 0; j < GH; j++) 
+    {
+        for (int i = 0; i < GW; i++) 
+        {
+            int indx = j * GW + i;
 
-            // wrap around
-            //int j_ = j - 1 >= 0 ? j - 1 : GH - 1;
-            //int _j = j + 1 < GH ? j + 1 : 0;
-            //int i_ = i - 1 >= 0 ? i - 1 : GW - 1;
-            //int _i = i + 1 < GW ? i + 1 : 0;
-
-            //// count alive neighbors //rewrite neighbors logic
-            //int n = cells[prev_buf][j_][i_]
-            //    + cells[prev_buf][j_][i]
-            //    + cells[prev_buf][j_][_i]
-            //    + cells[prev_buf][j][i_]
-            //    + cells[prev_buf][j][_i]
-            //    + cells[prev_buf][_j][i_]
-            //    + cells[prev_buf][_j][i]
-            //    + cells[prev_buf][_j][_i];
-
-            GetNeighbors( currentState, (Vector2) {j,i}, &nb, (Vector2) { GW, GH });
+            GetNeighbors( currentState, (Vector2) { j, i }, &nb, (Vector2) { GW, GH });
             
             //int n_count = 0;
             //for (size_t i = 1; i < NEIGHBORS_COUNT; i++) //zero index is for cell itself
@@ -239,27 +181,18 @@ void PassGeneration() {
             //}
             //TraceLog(LOG_INFO, TextFormat("cell - %d,%d \t n - %d", i,j,n_count ));
 
+            nextState[indx] = 0;//default stable is death
 
-            // set cell according to rules
-            //cells[curr_buf][j][i] = (int)n == 3 || (cells[prev_buf][j][i] && n == 2);
-
-            //cells[curr_buf][j][i] = 0; //default stable is death
-            //int* curr_cell = &cells[curr_buf][j][i];
-            //int* prev_cell = &cells[prev_buf][j][i];
-
-
-            nextState[j*GW+i] = 0;//default stable is death
-
-            StayBHV(&nextState[j * GW + i], currentState[j * GW + i], &nb, stay_rule);
-            BirthBHV(&nextState[j * GW + i], currentState[j * GW + i], &nb, birth_rule);
+            StayBHV(&nextState[indx], currentState[indx], &nb, stay_rule);
+            BirthBHV(&nextState[indx], currentState[indx], &nb, birth_rule);
         }
     }
-
+    // TODO: delete mem copy
     memcpy(currentState, nextState, sizeof(currentState));
 }
 
-void SpawnFigure(Vector2 pos)
-{
+void SpawnFigure(int x, int y)
+{ // TODO: Rework for spawn screen setting feature
     int SIZE = 9;
     int figure[9] = 
     {
@@ -267,19 +200,18 @@ void SpawnFigure(Vector2 pos)
         0,0,1,0,
         1,1,1,0,
         0,0,0,0*/
-        1,0,0,
-        1,0,0,
-        1,0,0,
+        0,0,0,
+        1,1,1,
+        0,0,0,
     };
 
     for (size_t j = 0, n=0; j < sqrt(SIZE); j++)
     {
         for (size_t i = 0; i < sqrt(SIZE); i++)
         {
-            nextState[CoordsToIndex((int)pos.x + i, (int)pos.y + j)] = figure[n];
-            currentState[CoordsToIndex((int)pos.x + i, (int)pos.y + j)] = figure[n];
-            /*cells[0][(int)pos.x + i][(int)pos.y + j] = figure[n];
-            cells[1][(int)pos.x + i][(int)pos.y + j] = figure[n];*/
+            int indx = (y + j) * GW + x + i;
+            nextState[indx] = figure[n];
+            currentState[indx] = figure[n];
             ++n;
         }
     }
@@ -293,8 +225,6 @@ void WipeGrid(int wiper)
 
     for (int i = 0; i < GW; i++) {
         for (int j = 0; j < GH; j++) {
-            // set cell according to rules
-            //cells[curr_buf][j][i] = wiper;
             nextState[i * GH + j] = wiper;
             currentState[i * GH + j] = wiper;
         }
@@ -314,11 +244,15 @@ void InitGameplayScreen(void)
 
     int screenWidth = (GW * CS) >= 1280 ? GW * CS : 1280;
     int screenHeight = (GH * CS) >= 720 ? GH * CS : 720;
+
+    GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
+    rt2D = LoadRenderTexture(screenWidth * renderScale, screenHeight * renderScale);
+    tx = LoadTexture("Resources/Images/cell.png");
+    rc = (Rectangle){ 100,200,100,201 };
+
     // TODO : remember to free mem
-    /*nextState = (int*)MemAlloc(GH * GW * sizeof(int));
-    currCellsBuffer2 = (int*)MemAlloc(GH * GW * sizeof(int));
-    currentState = (int*)MemAlloc(GH * GW * sizeof(int));
-    prevCellsBuffer2 = (int*)MemAlloc(GH * GW * sizeof(int));*/
+    if (nextState == NULL || currentState == NULL)
+        return 1;
 
     /*int testBuff[9] =
     {
@@ -330,30 +264,20 @@ void InitGameplayScreen(void)
     GetNeighbors(testBuff, (Vector2) { 2, 2 }, &n, (Vector2) { 3, 3 });
     TraceLog(LOG_INFO, TextFormat("test n - %d", n));*/
 
-
-    size_t sz = sizeof(nextState) / sizeof(nextState[0]);
-
-    if (nextState == NULL || currCellsBuffer2 == NULL || currentState == NULL|| currentState == NULL)
-        return 1;
-
     // set window size according to grid and cell sizes
     screenCentre = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
     SetWindowSize(screenWidth, screenHeight);
+
+    SetTargetFPS(30);
+
+    InitCells();
     // set virtual camera
     camera.target = screenCentre;
     camera.offset = screenCentre;
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    SetTargetFPS(30);
     running = true;
-
-    GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
-    InitCells();
-
-    rt2D = LoadRenderTexture(screenWidth * renderScale, screenHeight * renderScale);
-    tx = LoadTexture("Resources/Images/cell.png");
-    rc = (Rectangle){ 100,200,100,201 };
 }
 
 // Gameplay Screen Update logic
@@ -370,7 +294,7 @@ void UpdateGameplayScreen(void)
 
     if (IsKeyPressed(KEY_SPACE))                    paused = !paused;
     if (IsKeyPressed(KEY_ENTER))                    RandomizeCells();
-
+    // TODO: redo mouse cam controls
     if (IsKeyDown(KEY_UP))      camera.target = (Vector2){ camera.target.x, camera.target.y - 10 };
     if (IsKeyDown(KEY_DOWN))    camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
     if (IsKeyDown(KEY_LEFT))    camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
@@ -413,7 +337,7 @@ void RenderGridToTexture(RenderTexture2D rt)
 
                 tx_v = (Vector2){ x, y };
 
-                if(nextState[j*GW+i] == 1)
+                if(nextState[j * GW + i] == 1)
                     DrawTextureEx(tx, tx_v, 0, renderScale / m, GREEN);
                 else
                     if(nextState[j * GW + i] == 2)
@@ -431,6 +355,7 @@ void RenderGUI()
         // SpawnFigure(0, 0);
     
     paused = GuiToggle((Rectangle) { 30, 30, 120, 60 }, "#132#", paused);
+
     if (GuiButton((Rectangle) { 30, 90, 120, 60 }, "#134#"))
         PassGeneration();
 
@@ -438,7 +363,7 @@ void RenderGUI()
         WipeGrid(0);
 
     if (GuiButton((Rectangle) { 30, 210, 120, 60 }, "#152#"))
-        SpawnFigure((Vector2) {0,0/*GW/2,GH/2*/});
+        SpawnFigure(GW/2, GH/2);
 
     char s_str[10] = { 0 }, b_str[10] = {0};
     
@@ -484,11 +409,8 @@ void UnloadGameplayScreen(void)
     UnloadRenderTexture(rt2D);
     UnloadTexture(tx);
 
-    //WTF?
-    //if (nextState != NULL) MemFree(nextState);
-    //if (currCellsBuffer2 != NULL) MemFree(currCellsBuffer2);
-   // if (currentState != NULL) MemFree(currentState);
-   // if (prevCellsBuffer2 != NULL) MemFree(prevCellsBuffer2);
+    MemFree(*nextState);
+    MemFree(*currentState);
 }
 
 // Gameplay Screen should finish?
