@@ -18,11 +18,13 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
-#define m 2
+#define m 4
 
 #define CS 32/m     // cell size
 #define GW 48*m     // grid width
 #define GH 32*m     // grid height
+
+#define TICKRATE 15 // update grid 15 times in a second
 
 static Vector2 screenCentre;
 
@@ -291,7 +293,7 @@ void UpdateGameplayScreen(void)
         finishScreen = 1;
         //PlaySound(fxCoin);
     }
-
+    
     if (IsKeyPressed(KEY_SPACE))                    paused = !paused;
     if (IsKeyPressed(KEY_ENTER))                    RandomizeCells();
     // TODO: redo mouse cam controls
@@ -299,7 +301,10 @@ void UpdateGameplayScreen(void)
     if (IsKeyDown(KEY_DOWN))    camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
     if (IsKeyDown(KEY_LEFT))    camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
     if (IsKeyDown(KEY_RIGHT))   camera.target = (Vector2){ camera.target.x + 10, camera.target.y };
-
+    
+    if (IsKeyPressed(KEY_C))
+        CellsCount(currentState, (sizeof(currentState) / sizeof(currentState[0])));
+    
     // Camera zoom controls
     if ((GetMouseWheelMove() > 0.1f))
     {
@@ -337,10 +342,10 @@ void RenderGridToTexture(RenderTexture2D rt)
 
                 tx_v = (Vector2){ x, y };
 
-                if(nextState[j * GW + i] == 1)
+                if(nextState[j * GW + i] == PLAYER_CELL)
                     DrawTextureEx(tx, tx_v, 0, renderScale / m, GREEN);
                 else
-                    if(nextState[j * GW + i] == 2)
+                    if(nextState[j * GW + i] == ENEMY_CELL)
                         DrawTextureEx(tx, tx_v, 0, renderScale / m, RED);
             }
         }

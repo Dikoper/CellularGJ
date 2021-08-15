@@ -3,6 +3,8 @@
 *   Screens Functions Declarations (Init, Update, Draw, Unload)
 *
 **********************************************************************************************/
+#pragma once
+
 #ifndef SCREENS_H
 #define SCREENS_H
 
