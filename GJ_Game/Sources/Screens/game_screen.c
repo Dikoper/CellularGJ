@@ -11,7 +11,7 @@
 #include "raymath.h"
 #include <string.h>
 
-#define EPOCH_LIMITS 100
+#define EPOCH_LIMITS 10
 #define DEBUG_BUILD true
 
 //----------------------------------------------------------------------------------
@@ -21,8 +21,8 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
-//static int ticks = 1;
-#define TICKRATE 1000 / 5 / 1000 // update grid X times in a second
+static int ticks = 1;
+#define TICKRATE 1000 / 1 / 1000 // update grid X times in a second
 
 double lastTick = 0;
 size_t ticksCount;
@@ -48,6 +48,8 @@ RuleAttrib pStillRule, pBirthRule, eStillRule, eBirthRule;; // TODO: upgrade rul
 
 static int nb[NEIGHBORS_COUNT] = {0};
 
+static int rndFig[GRID_X * GRID_Y] = { 0 };
+
 //----------------------------------------------------------------------------------
 // Gameplay Functions Definition
 //----------------------------------------------------------------------------------
@@ -66,17 +68,17 @@ void RandomizeCells()
 
 void RandomizeFigure(int* fig, int type)
 {
-   for (int i = 0; i < GRID_Y; i++) 
-   {
-    for (int j = 0; j < GRID_Y; j++) 
-       {
-      int rnd = GetRandomValue(0, 1);
-       int indx = i * GRID_Y + j;
-       if (rnd)
+    for (int i = 0; i < GRID_Y; i++)
+    {
+        for (int j = 0; j < GRID_Y; j++)
         {
-        fig[indx] = type;
-       }
-        } 
+            int rnd = GetRandomValue(0, 1);
+            int indx = i * GRID_Y + j;
+            if (rnd)
+            {
+                fig[indx] = type;
+            }
+        }
     }
 }
 
@@ -98,8 +100,8 @@ void PassGeneration() {
             }
             else
             {
-                StayBHV(&nextState[indx], currentState[indx], &nb, eStillRule);
-                BirthBHV(&nextState[indx], currentState[indx], &nb, eBirthRule);
+                StayBHV(&nextState[indx], currentState[indx], &nb, pStillRule);
+                BirthBHV(&nextState[indx], currentState[indx], &nb, pBirthRule);
             }
         }
     }
@@ -107,14 +109,14 @@ void PassGeneration() {
     memcpy(currentState, nextState, sizeof(currentState));
 }
 
-void SpawnFigure(int x, int y, int type)
+void SpawnFigure(int* figure, int x, int y, int type)
 {
     for (size_t i = 0; i < GRID_X; i++)
     {
         for (size_t j = 0; j < GRID_Y; j++)
         {
             size_t indx = (y + j) * GAME_WIDTH + x + i;
-            int cell = initFigure[i * GRID_Y + (GRID_Y - 1 - j)];
+            int cell = figure[i * GRID_Y + (GRID_Y - 1 - j)];
             if (cell) 
             {
                 nextState[indx] = type;
@@ -138,12 +140,15 @@ void InitCells() {
 
     WipeGrid(0);
     // Player
-    SpawnFigure(0, 0, PLAYER_CELL);
+    SpawnFigure(&initFigure, 0, 0, PLAYER_CELL);
 
     // ENEMY
-    SpawnFigure(GAME_WIDTH - GRID_X, GAME_HEIGHT - GRID_Y, ENEMY_CELL);
+    RandomizeFigure(&rndFig, ENEMY_CELL);
+    SpawnFigure(&rndFig, GAME_WIDTH - GRID_X, GAME_HEIGHT - GRID_Y, ENEMY_CELL);
 
-    //RandomizeCells();
+
+   // RandomizeFigure(&eBirthRule, ENEMY_CELL);//bug
+   // RandomizeFigure(&eStillRule, ENEMY_CELL);//
 }
 
 //----------------------------------------------------------------------------------
@@ -229,7 +234,7 @@ void UpdateGameplayScreen(void)
     }
     else
     {
-        if (GetTime() - lastTick > (float)TICKRATE)
+        if (GetTime() - lastTick > (float)TICKRATE * ticks)
         {
             PassGeneration();
             lastTick = GetTime();
@@ -276,7 +281,7 @@ void RenderGUI()
     if (GuiButton((Rectangle) { 30, 90, 120, 60 }, "#134#"))
         PassGeneration();
 
-    //ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
+    ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
 
     DrawText(TextFormat("Epoch - %d", ticksCount), 500, 10, 28, RAYWHITE);
 
@@ -289,29 +294,17 @@ void RenderGUI()
             WipeGrid(0);
 
         if (GuiButton((Rectangle) { 30, 210, 120, 60 }, "#152#"))
-            SpawnFigure(GAME_WIDTH / 2, GAME_HEIGHT / 2, PLAYER_CELL);
+            SpawnFigure(&initFigure,GAME_WIDTH / 2, GAME_HEIGHT / 2, PLAYER_CELL);
 
         char s_str[10] = { 0 }, b_str[10] = { 0 };
 
-        for (int i = 0; i < NEIGHBORS_COUNT; ++i)
-        {
-            // TODO: rewrite for values more that 1 (0,1,2,3...)
-            if (pStillRule[i] == 1)
-            {
-                strcat_s(s_str, sizeof(s_str), TextFormat("%d", i));
-            }
-            if (pBirthRule[i] == 1)
-            {
-                strcat_s(b_str, sizeof(b_str), TextFormat("%d", i));
-            }
-        }
+        RuleToText(pStillRule, sizeof(s_str), &s_str);
+        RuleToText(pBirthRule, sizeof(b_str), &b_str);
 
         DrawText(s_str, 250, 10, 28, RED);
         DrawText(b_str, 250, 30, 28, BLUE);
         DrawFPS(10, 10);
     }
-
-    
 }
 
 // Gameplay Screen Draw logic

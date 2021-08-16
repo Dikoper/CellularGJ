@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-#define M 8 //multiplyer
+#define M 2 //multiplyer
 
 #define CELL_SIZE 32/M     // cell size
 #define GAME_WIDTH 48*M     // grid width
@@ -36,14 +36,14 @@ typedef int RuleAttrib[NEIGHBORS_COUNT]; //zero index is the root(centre) cell
 extern RuleAttrib pStillRule, pBirthRule;
 extern Figure initFigure;
 
-static void RuleToText(int* rule, char* out)
+static void RuleToText(int* rule, size_t size, char* out)
 {
     for (int i = 0; i < NEIGHBORS_COUNT; i++)
     {
         // TODO: rewrite for values more that 1 (0,1,2,3...)
         if (rule[i] == 1)
         {
-            strcat_s(out, sizeof(*out), TextFormat("%d", i));
+            strcat_s(out, size, TextFormat("%d", i));
         }
     }
 }
