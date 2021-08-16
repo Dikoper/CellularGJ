@@ -142,9 +142,9 @@ static void ScreenUpdater(GameScreen gs)
             {
                 UpdateGameplayScreen();
 
-                //if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
-                //else 
                 if (FinishGameplayScreen() == 1) TransitionToScreen(TITLE);
+                else 
+                if (FinishGameplayScreen() == 2) TransitionToScreen(SETUP);
 
             } break;
             default: break;

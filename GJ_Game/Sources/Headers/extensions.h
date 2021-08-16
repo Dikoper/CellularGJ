@@ -5,11 +5,11 @@
 ******************************************************************************/
 #pragma once 
 
-#define m 2
+#define M 1 //multiplyer
 
-#define CS 32/m     // cell size
-#define GW 48*m     // grid width
-#define GH 32*m     // grid height
+#define CELL_SIZE 32/M     // cell size
+#define GAME_WIDTH 48*M     // grid width
+#define GAME_HEIGHT 32*M     // grid height
 
 #define GRID_X 5
 #define GRID_Y 8
@@ -49,7 +49,7 @@ static int WarpCoord(int x, int y, Vector2 size)
     if (x < 0)
         x = size.x - 1;
 
-    int idx = y * GW + x;
+    int idx = y * GAME_WIDTH + x;
 
     return idx;
 }

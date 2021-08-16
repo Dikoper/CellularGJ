@@ -93,8 +93,6 @@ void DrawSetupScreen(void)
 
     DrawText(controlsText, SCREEN_CENTRE.x - 300, GetScreenHeight()-200, 14, DARKGRAY);
 
-    DrawFPS(10, 10);
-
     // TODO: Draw OPTIONS screen here!
     if (GuiButton((Rectangle) { SCREEN_CENTRE.x, SCREEN_CENTRE.y, 400, 250 }, "Process to game"))
     {

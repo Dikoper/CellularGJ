@@ -20,9 +20,9 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
-#define TICKRATE 1000/5/1000 // update grid 5 times in a second
+#define TICKRATE 1000/2/1000 // update grid 2 times in a second
 
-double lastTick;
+double lastTick = 0;
 size_t ticksCount;
 
 static Vector2 screenCentre;
@@ -32,12 +32,12 @@ static bool paused = false;
 static int prev_buf = 0;    // to alternate between cell buffers //TODO: rewrite this shit
 static int curr_buf = 1;
 
-static int pad;    // add a padding space around cells (just to look nicer) ?
-static int pad2;
+//static int pad;    // add a padding space around cells (just to look nicer) ?
+//static int pad2;
 
 // TODO: unite in one buffer to get rid of memcopy
-static int nextState[GH * GW];
-static int currentState[GH * GW];
+static int nextState[GAME_HEIGHT * GAME_WIDTH];
+static int currentState[GAME_HEIGHT * GAME_WIDTH];
 
 static Camera2D camera;
 static Vector2 tx_v;
@@ -59,50 +59,29 @@ static int nb[NEIGHBORS_COUNT] = {0};
 
 void RandomizeCells() 
 {
-    for (int i = 0; i < GH; i++) {
-        for (int j = 0; j < GW; j++) {
+    for (int i = 0; i < GAME_HEIGHT; i++) {
+        for (int j = 0; j < GAME_WIDTH; j++) {
             int rnd = GetRandomValue(0, 2);
-            int indx = i * GW + j;
+            int indx = i * GAME_WIDTH + j;
             nextState[indx] = rnd;
             currentState[indx] = rnd;
         }
     }
 }
 
-void InitCells() {
-    // Am i need this?
-    pad = 1;        // top and left padding
-    pad2 = pad * 2;   // bottom and right padding
-
-    if (m > 4) {    // check if cells aren't too small, or else they become invisible with padding
-        pad = 0;    // the condition should be adjusted if default padding values are changed
-        pad2 = 0;
-    }
-
-    RandomizeCells();
-}
-
 void PassGeneration() {
     prev_buf = 1 - prev_buf;      // switch buffers
     curr_buf = 1 - curr_buf;
 
-    for (int j = 0; j < GH; j++) 
+    for (int j = 0; j < GAME_HEIGHT; j++) 
     {
-        for (int i = 0; i < GW; i++) 
+        for (int i = 0; i < GAME_WIDTH; i++) 
         {
-            int indx = j * GW + i;
+            int indx = j * GAME_WIDTH + i;
 
-            GetNeighbors( currentState, (Vector2) { j, i }, &nb, (Vector2) { GW, GH });
-            
-            //int n_count = 0;
-            //for (size_t i = 1; i < NEIGHBORS_COUNT; i++) //zero index is for cell itself
-            //{
-            //    if (nb[i] >= 1)
-            //        n_count++;
-            //}
-            //TraceLog(LOG_INFO, TextFormat("cell - %d,%d \t n - %d", i,j,n_count ));
-
-            nextState[indx] = 0;//default stable is death
+            GetNeighbors( currentState, (Vector2) { j, i }, &nb, (Vector2) { GAME_WIDTH, GAME_HEIGHT });
+ 
+            nextState[indx] = 0;//default state is death
 
             StayBHV(&nextState[indx], currentState[indx], &nb, stay_rule);
             BirthBHV(&nextState[indx], currentState[indx], &nb, birth_rule);
@@ -112,16 +91,21 @@ void PassGeneration() {
     memcpy(currentState, nextState, sizeof(currentState));
 }
 
-void SpawnFigure(int x, int y)
+void SpawnFigure(int x, int y, int type)
 {
-    for (size_t i = 0, n=0; i < GRID_X; i++)
+    for (size_t i = 0; i < GRID_X; i++)
     {
         for (size_t j = 0; j < GRID_Y; j++)
         {
-            size_t indx = (y + j) * GW + x + i;
-            nextState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 - j)];
-            currentState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 -j)];
-            ++n;
+            size_t indx = (y + j) * GAME_WIDTH + x + i;
+            int cell = initFigure[i * GRID_Y + (GRID_Y - 1 - j)];
+            if (cell) 
+            {
+                nextState[indx] = type;
+                currentState[indx] = type;
+            }
+            //nextState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 - j)];
+            //currentState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 -j)];
         }
     }
 }
@@ -131,12 +115,24 @@ void WipeGrid(int wiper)
     prev_buf = 1 - prev_buf;      // switch buffers
     curr_buf = 1 - curr_buf;
 
-    for (int i = 0; i < GW; i++) {
-        for (int j = 0; j < GH; j++) {
-            nextState[i * GH + j] = wiper;
-            currentState[i * GH + j] = wiper;
+    for (int i = 0; i < GAME_WIDTH; i++) {
+        for (int j = 0; j < GAME_HEIGHT; j++) {
+            nextState[i * GAME_HEIGHT + j] = wiper;
+            currentState[i * GAME_HEIGHT + j] = wiper;
         }
     }
+}
+
+void InitCells() {
+
+    WipeGrid(0);
+    // Player
+    SpawnFigure(0, 0, PLAYER_CELL);
+
+    // ENEMY
+    SpawnFigure(GAME_WIDTH - GRID_X, GAME_HEIGHT - GRID_Y, ENEMY_CELL);
+
+    //RandomizeCells();
 }
 
 //----------------------------------------------------------------------------------
@@ -150,12 +146,14 @@ void InitGameplayScreen(void)
     framesCounter = 0;
     finishScreen = 0;
 
-    int screenWidth = (GW * CS) >= 1280 ? GW * CS : 1280;
-    int screenHeight = (GH * CS) >= 720 ? GH * CS : 720;
+    int textureWidth = (GAME_WIDTH * CELL_SIZE) >= 1280 ? GAME_WIDTH * CELL_SIZE : 1280;
+    int textureHeight = (GAME_HEIGHT * CELL_SIZE) >= 720 ? GAME_HEIGHT * CELL_SIZE : 720;
+    int screenWidth = 1280;
+    int screenHeight = 720;
 
-    GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
-    rt2D = LoadRenderTexture(screenWidth * renderScale, screenHeight * renderScale);
+    rt2D = LoadRenderTexture(textureWidth * renderScale, textureHeight * renderScale);
     tx = LoadTexture("Resources/Images/cell.png");
+    GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
     rc = (Rectangle){ 100,200,100,201 };
 
     // TODO : remember to free mem
@@ -196,7 +194,7 @@ void UpdateGameplayScreen(void)
     // Press enter or tap to change to ENDING screen
     if (IsKeyPressed(KEY_ESCAPE))
     {
-        finishScreen = 1;
+        finishScreen = 2;
         //PlaySound(fxCoin);
     }
     
@@ -230,12 +228,12 @@ void UpdateGameplayScreen(void)
     }
     else
     {
-        if (GetTime() - lastTick > TICKRATE)
+        if (GetTime() - lastTick > (float)TICKRATE)
         {
             PassGeneration();
             lastTick = GetTime();
             ticksCount++;
-        }   
+        }
     }
 
 
@@ -246,20 +244,20 @@ void RenderGridToTexture(RenderTexture2D rt)
 {
     BeginTextureMode(rt);
         ClearBackground(BLACK);
-        for (int j = 0; j < GH; j++) {
-            for (int i = 0; i < GW; i++) {
-                int x = renderScale * i * CS + pad;
-                int y = renderScale * j * CS + pad;
-                int w = CS - pad2;
-                int h = CS - pad2;
+        for (int j = 0; j < GAME_HEIGHT; j++) {
+            for (int i = 0; i < GAME_WIDTH; i++) {
+                int x = renderScale * i * CELL_SIZE;
+                int y = renderScale * j * CELL_SIZE;
+                /*int w = CELL_SIZE;
+                int h = CELL_SIZE;*/
 
                 tx_v = (Vector2){ x, y };
 
-                if(nextState[j * GW + i] == PLAYER_CELL)
-                    DrawTextureEx(tx, tx_v, 0, renderScale / m, GREEN);
+                if(nextState[j * GAME_WIDTH + i] == PLAYER_CELL)
+                    DrawTextureEx(tx, tx_v, 0, renderScale / M, GREEN);
                 else
-                    if(nextState[j * GW + i] == ENEMY_CELL)
-                        DrawTextureEx(tx, tx_v, 0, renderScale / m, RED);
+                    if(nextState[j * GAME_WIDTH + i] == ENEMY_CELL)
+                        DrawTextureEx(tx, tx_v, 0, renderScale / M, RED);
             }
         }
     EndTextureMode();
@@ -277,16 +275,16 @@ void RenderGUI()
     if (GuiButton((Rectangle) { 30, 90, 120, 60 }, "#134#"))
         PassGeneration();
 
-    if (GuiButton((Rectangle) { 30, 150, 120, 60 }, "#79#"))
-        WipeGrid(0);
-
-    if (GuiButton((Rectangle) { 30, 210, 120, 60 }, "#152#"))
-        SpawnFigure(GW/2, GH/2);
-
     DrawText(TextFormat("Epoch - %d", ticksCount), 500, 10, 28, RAYWHITE);
 
     if (DEBUG_BUILD) 
     {
+        if (GuiButton((Rectangle) { 30, 150, 120, 60 }, "#79#"))
+            WipeGrid(0);
+
+        if (GuiButton((Rectangle) { 30, 210, 120, 60 }, "#152#"))
+            SpawnFigure(GAME_WIDTH / 2, GAME_HEIGHT / 2, PLAYER_CELL);
+
         char s_str[10] = { 0 }, b_str[10] = { 0 };
 
         for (int i = 0; i < NEIGHBORS_COUNT; ++i)
@@ -332,7 +330,7 @@ void UnloadGameplayScreen(void)
     // TODO: Unload GAMEPLAY screen variables here!
     UnloadRenderTexture(rt2D);
     UnloadTexture(tx);
-
+    //WTF?
     MemFree(*nextState);
     MemFree(*currentState);
 }
