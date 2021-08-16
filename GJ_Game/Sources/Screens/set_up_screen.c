@@ -14,9 +14,13 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
+Figure initFigure;
+
 int val = 0;
 
 RuleAttrib stay_rule, birth_rule;
+
+//static bool recs[GRID_X * GRID_Y] = { 0 };
 
 //----------------------------------------------------------------------------------
 // Setup Screen Functions Definition
@@ -32,6 +36,7 @@ void InitSetupScreen(void)
     //default for testing
     stay_rule[2] = stay_rule[3] = 1;
     birth_rule[3] = 1;
+    
 }
 
 // Setup Screen Update logic
@@ -40,6 +45,24 @@ void UpdateSetupScreen(void)
     // TODO: Update OPTIONS screen variables here!
 }
 #include "raygui.h"
+
+void DrawGrid(Rectangle rec,int cellSize)
+{
+    int x = rec.x;
+    int y = rec.y;
+    int pd = cellSize - 1;
+    
+    for (int i = 0; i < rec.width; i++)
+    {
+        for (int j = 0; j < rec.height; j++)
+        {
+            int idx = i * (int)rec.height + j;
+            Rectangle c_rc = { x + i * cellSize, y + j * cellSize, pd, pd };
+            initFigure[idx] = GuiCheckBox(c_rc, "", initFigure[idx]);
+        }
+    }
+}
+
 // Setup Screen Draw logic
 void DrawSetupScreen(void)
 {
@@ -54,7 +77,8 @@ void DrawSetupScreen(void)
         GuiSpinner((Rectangle) { 20 + i * 120, 25, 100, 25 }, TextFormat("b%d", i), &birth_rule[i], 0, 2, false);
     }
 
-    GuiGroupBox((Rectangle) { 10, 100, 250, 400 }, "Figure");
+    DrawGrid((Rectangle) { 10, 100, GRID_X, GRID_Y}, 32);
+    GuiGroupBox((Rectangle) { 10, 100, GRID_X * 32, GRID_Y * 32 }, "Figure");
 
     const char* controlsText =
         "Game controls :"
@@ -68,6 +92,8 @@ void DrawSetupScreen(void)
         "\n Press escape key to get back to title screen";
 
     DrawText(controlsText, SCREEN_CENTRE.x - 300, GetScreenHeight()-200, 14, DARKGRAY);
+
+    DrawFPS(10, 10);
 
     // TODO: Draw OPTIONS screen here!
     if (GuiButton((Rectangle) { SCREEN_CENTRE.x, SCREEN_CENTRE.y, 400, 250 }, "Process to game"))

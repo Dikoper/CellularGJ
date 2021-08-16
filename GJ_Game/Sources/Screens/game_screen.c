@@ -11,18 +11,14 @@
 #include "raymath.h"
 #include <string.h>
 
+#define DEBUG_BUILD true
+
 //----------------------------------------------------------------------------------
 // Module Variables Definition (local)
 //----------------------------------------------------------------------------------
 
 static int framesCounter = 0;
 static int finishScreen = 0;
-
-#define m 4
-
-#define CS 32/m     // cell size
-#define GW 48*m     // grid width
-#define GH 32*m     // grid height
 
 #define TICKRATE 1000/5/1000 // update grid 5 times in a second
 
@@ -86,86 +82,6 @@ void InitCells() {
     RandomizeCells();
 }
 
-int WarpCoord(int x, int y, Vector2 size)
-{
-    if (y >= size.y) 
-        y = 0;
-    if (x >= size.x)
-        x = 0;
-    if (y < 0) 
-        y = size.y - 1;
-    if (x < 0) 
-        x = size.x - 1;
-
-    int idx = y * GW + x;
-
-    return idx;
-}
-
-int* GetNeighbors(int* buffer, Vector2 pos, int *out, Vector2 warp)
-{
-    /// <summary>
-    /// OutputIndexesLayout
-    /// 1|2|3
-    /// 4|0|5
-    /// 6|7|8
-    /// </summary>
-
-    int neighbors[NEIGHBORS_COUNT] = {0};
-
-    int y = (int)pos.x;
-    int x = (int)pos.y;
-
-    //while (i < 2)
-    //{
-    //    while (j < 2)
-    //    {
-    //        _i = x + i;
-    //        if ((x + i >= warp.x))
-    //            _i = 0;
-    //        if ((x + i < 0))
-    //            _i = warp.x - 1;
-    //            
-    //        //
-    //        _j = y + j;
-    //        if ((y + j >= warp.y))
-    //            _j = 0;
-
-    //        if ((y + j < 0))
-    //            _j = warp.y - 1;
-    //        
-    //        int b = buffer[_i * (int)warp.y + _j];
-    //        if (i == 0 && j == 0) {
-    //            out[0] = b;
-    //            neighbors[0] = b;
-    //        }
-    //        else
-    //        {
-    //            out[n] = b;
-    //            neighbors[n] = b;
-    //            ++n;
-    //        }
-    //        ++j;
-    //    }
-    //    j = -1;
-    //    ++i;
-    //}
-
-    //warp
-
-    out[0] = buffer[WarpCoord(x, y, warp)];
-    out[1] = buffer[WarpCoord(x -1, y-1, warp)];
-    out[2] = buffer[WarpCoord(x, y-1, warp)];
-    out[3] = buffer[WarpCoord(x+1, y-1, warp)];
-    out[4] = buffer[WarpCoord(x-1, y, warp)];
-    out[5] = buffer[WarpCoord(x+1, y, warp)];
-    out[6] = buffer[WarpCoord(x-1, y+1, warp)];
-    out[7] = buffer[WarpCoord(x, y+1, warp)];
-    out[8] = buffer[WarpCoord(x+1, y + 1, warp)];
-
-    return out;
-}
-
 void PassGeneration() {
     prev_buf = 1 - prev_buf;      // switch buffers
     curr_buf = 1 - curr_buf;
@@ -197,30 +113,17 @@ void PassGeneration() {
 }
 
 void SpawnFigure(int x, int y)
-{ // TODO: Rework for spawn screen setting feature
-    int SIZE = 9;
-    int figure[9] = 
+{
+    for (size_t i = 0, n=0; i < GRID_X; i++)
     {
-        /*0,1,0,0,
-        0,0,1,0,
-        1,1,1,0,
-        0,0,0,0*/
-        0,0,0,
-        1,1,1,
-        0,0,0,
-    };
-
-    for (size_t j = 0, n=0; j < sqrt(SIZE); j++)
-    {
-        for (size_t i = 0; i < sqrt(SIZE); i++)
+        for (size_t j = 0; j < GRID_Y; j++)
         {
             size_t indx = (y + j) * GW + x + i;
-            nextState[indx] = figure[n];
-            currentState[indx] = figure[n];
+            nextState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 - j)];
+            currentState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 -j)];
             ++n;
         }
     }
-
 }
 
 void WipeGrid(int wiper)
@@ -380,27 +283,31 @@ void RenderGUI()
     if (GuiButton((Rectangle) { 30, 210, 120, 60 }, "#152#"))
         SpawnFigure(GW/2, GH/2);
 
-    char s_str[10] = { 0 }, b_str[10] = {0};
-    
-    for (int i = 0; i < NEIGHBORS_COUNT; ++i) 
-    {
-        // TODO: rewrite for values more that 1 (0,1,2,3...)
-        if (stay_rule[i] == 1) 
-        {
-            strcat_s(s_str, sizeof(s_str), TextFormat("%d", i));
-        }
-        if (birth_rule[i] == 1)
-        {
-            strcat_s(b_str, sizeof(b_str), TextFormat("%d", i));
-        }
-    }
-
-    DrawText(s_str, 250, 10, 28, RED);
-    DrawText(b_str, 250, 30, 28, BLUE);
-
     DrawText(TextFormat("Epoch - %d", ticksCount), 500, 10, 28, RAYWHITE);
 
-    DrawFPS(10, 10);
+    if (DEBUG_BUILD) 
+    {
+        char s_str[10] = { 0 }, b_str[10] = { 0 };
+
+        for (int i = 0; i < NEIGHBORS_COUNT; ++i)
+        {
+            // TODO: rewrite for values more that 1 (0,1,2,3...)
+            if (stay_rule[i] == 1)
+            {
+                strcat_s(s_str, sizeof(s_str), TextFormat("%d", i));
+            }
+            if (birth_rule[i] == 1)
+            {
+                strcat_s(b_str, sizeof(b_str), TextFormat("%d", i));
+            }
+        }
+
+        DrawText(s_str, 250, 10, 28, RED);
+        DrawText(b_str, 250, 30, 28, BLUE);
+        DrawFPS(10, 10);
+    }
+
+    
 }
 
 // Gameplay Screen Draw logic
