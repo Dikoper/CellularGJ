@@ -18,7 +18,7 @@ Figure initFigure;
 
 int val = 0;
 
-RuleAttrib stay_rule, birth_rule;
+RuleAttrib pStillRule, pBirthRule;
 
 //static bool recs[GRID_X * GRID_Y] = { 0 };
 
@@ -34,8 +34,8 @@ void InitSetupScreen(void)
     finishScreen = 0;
 
     //default for testing
-    stay_rule[2] = stay_rule[3] = 1;
-    birth_rule[3] = 1;
+    pStillRule[2] = pStillRule[3] = 1;
+    pBirthRule[3] = 1;
     
 }
 
@@ -69,12 +69,12 @@ void DrawSetupScreen(void)
     //stay
     for (int i=0 ; i < NEIGHBORS_COUNT; ++i) 
     {
-        GuiSpinner((Rectangle) { 20 + i * 120, 0, 100, 25 }, TextFormat("s%d", i), &stay_rule[i], 0, 2, false);
+        GuiSpinner((Rectangle) { 20 + i * 120, 0, 100, 25 }, TextFormat("s%d", i), &pStillRule[i], 0, 2, false);
     }
     //birth
     for (int i = 0; i < NEIGHBORS_COUNT; ++i)
     {
-        GuiSpinner((Rectangle) { 20 + i * 120, 25, 100, 25 }, TextFormat("b%d", i), &birth_rule[i], 0, 2, false);
+        GuiSpinner((Rectangle) { 20 + i * 120, 25, 100, 25 }, TextFormat("b%d", i), &pBirthRule[i], 0, 2, false);
     }
 
     DrawGrid((Rectangle) { 10, 100, GRID_X, GRID_Y}, 32);

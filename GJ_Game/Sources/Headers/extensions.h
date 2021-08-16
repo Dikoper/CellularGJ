@@ -5,7 +5,9 @@
 ******************************************************************************/
 #pragma once 
 
-#define M 1 //multiplyer
+#include <string.h>
+
+#define M 8 //multiplyer
 
 #define CELL_SIZE 32/M     // cell size
 #define GAME_WIDTH 48*M     // grid width
@@ -23,20 +25,28 @@
 
 enum CellType
 {
-    PLAYER_CELL=1,
+    DEAD_CELL = 0,
+    PLAYER_CELL,
     ENEMY_CELL
 };
 
 typedef bool Figure[GRID_X * GRID_Y];
 
 typedef int RuleAttrib[NEIGHBORS_COUNT]; //zero index is the root(centre) cell
-extern RuleAttrib stay_rule, birth_rule;
+extern RuleAttrib pStillRule, pBirthRule;
 extern Figure initFigure;
 
-//typedef struct Rule {
-//    RuleAttrib attribs;
-//    void* Behave;
-//};
+static void RuleToText(int* rule, char* out)
+{
+    for (int i = 0; i < NEIGHBORS_COUNT; i++)
+    {
+        // TODO: rewrite for values more that 1 (0,1,2,3...)
+        if (rule[i] == 1)
+        {
+            strcat_s(out, sizeof(*out), TextFormat("%d", i));
+        }
+    }
+}
 
 static int WarpCoord(int x, int y, Vector2 size)
 {

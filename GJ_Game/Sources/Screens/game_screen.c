@@ -11,6 +11,7 @@
 #include "raymath.h"
 #include <string.h>
 
+#define EPOCH_LIMITS 100
 #define DEBUG_BUILD true
 
 //----------------------------------------------------------------------------------
@@ -20,7 +21,8 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
-#define TICKRATE 1000/2/1000 // update grid 2 times in a second
+//static int ticks = 1;
+#define TICKRATE 1000 / 5 / 1000 // update grid X times in a second
 
 double lastTick = 0;
 size_t ticksCount;
@@ -28,12 +30,6 @@ size_t ticksCount;
 static Vector2 screenCentre;
 
 static bool paused = false;
-// TODO: rewrite buffer stuff
-static int prev_buf = 0;    // to alternate between cell buffers //TODO: rewrite this shit
-static int curr_buf = 1;
-
-//static int pad;    // add a padding space around cells (just to look nicer) ?
-//static int pad2;
 
 // TODO: unite in one buffer to get rid of memcopy
 static int nextState[GAME_HEIGHT * GAME_WIDTH];
@@ -47,9 +43,8 @@ static bool running;
 
 static float renderScale = 1.0f;
 RenderTexture2D rt2D;
-RenderTexture2D guiRT;
 
-RuleAttrib stay_rule, birth_rule; // TODO: upgrade rules stuff
+RuleAttrib pStillRule, pBirthRule, eStillRule, eBirthRule;; // TODO: upgrade rules stuff
 
 static int nb[NEIGHBORS_COUNT] = {0};
 
@@ -61,7 +56,7 @@ void RandomizeCells()
 {
     for (int i = 0; i < GAME_HEIGHT; i++) {
         for (int j = 0; j < GAME_WIDTH; j++) {
-            int rnd = GetRandomValue(0, 2);
+            int rnd = GetRandomValue(0, 2);//int rnd = GetRandomValue(DEAD_CELL, ENEMY_CELL)
             int indx = i * GAME_WIDTH + j;
             nextState[indx] = rnd;
             currentState[indx] = rnd;
@@ -69,10 +64,23 @@ void RandomizeCells()
     }
 }
 
-void PassGeneration() {
-    prev_buf = 1 - prev_buf;      // switch buffers
-    curr_buf = 1 - curr_buf;
+void RandomizeFigure(int* fig, int type)
+{
+   for (int i = 0; i < GRID_Y; i++) 
+   {
+    for (int j = 0; j < GRID_Y; j++) 
+       {
+      int rnd = GetRandomValue(0, 1);
+       int indx = i * GRID_Y + j;
+       if (rnd)
+        {
+        fig[indx] = type;
+       }
+        } 
+    }
+}
 
+void PassGeneration() {
     for (int j = 0; j < GAME_HEIGHT; j++) 
     {
         for (int i = 0; i < GAME_WIDTH; i++) 
@@ -81,10 +89,18 @@ void PassGeneration() {
 
             GetNeighbors( currentState, (Vector2) { j, i }, &nb, (Vector2) { GAME_WIDTH, GAME_HEIGHT });
  
-            nextState[indx] = 0;//default state is death
-
-            StayBHV(&nextState[indx], currentState[indx], &nb, stay_rule);
-            BirthBHV(&nextState[indx], currentState[indx], &nb, birth_rule);
+            nextState[indx] = DEAD_CELL;//default state is death
+            
+            if (currentState[indx] == PLAYER_CELL)
+            {
+                StayBHV(&nextState[indx], currentState[indx], &nb, pStillRule);
+                BirthBHV(&nextState[indx], currentState[indx], &nb, pBirthRule);
+            }
+            else
+            {
+                StayBHV(&nextState[indx], currentState[indx], &nb, eStillRule);
+                BirthBHV(&nextState[indx], currentState[indx], &nb, eBirthRule);
+            }
         }
     }
     // TODO: delete mem copy
@@ -104,17 +120,12 @@ void SpawnFigure(int x, int y, int type)
                 nextState[indx] = type;
                 currentState[indx] = type;
             }
-            //nextState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 - j)];
-            //currentState[indx] = initFigure[i * GRID_Y + (GRID_Y-1 -j)];
         }
     }
 }
 
 void WipeGrid(int wiper)
 {
-    prev_buf = 1 - prev_buf;      // switch buffers
-    curr_buf = 1 - curr_buf;
-
     for (int i = 0; i < GAME_WIDTH; i++) {
         for (int j = 0; j < GAME_HEIGHT; j++) {
             nextState[i * GAME_HEIGHT + j] = wiper;
@@ -146,6 +157,10 @@ void InitGameplayScreen(void)
     framesCounter = 0;
     finishScreen = 0;
 
+    //ticks = 0.01f;
+    //lastTick = 0;
+    paused = false;
+
     int textureWidth = (GAME_WIDTH * CELL_SIZE) >= 1280 ? GAME_WIDTH * CELL_SIZE : 1280;
     int textureHeight = (GAME_HEIGHT * CELL_SIZE) >= 720 ? GAME_HEIGHT * CELL_SIZE : 720;
     int screenWidth = 1280;
@@ -153,22 +168,8 @@ void InitGameplayScreen(void)
 
     rt2D = LoadRenderTexture(textureWidth * renderScale, textureHeight * renderScale);
     tx = LoadTexture("Resources/Images/cell.png");
-    GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
+    //GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
     rc = (Rectangle){ 100,200,100,201 };
-
-    // TODO : remember to free mem
-    if (nextState == NULL || currentState == NULL)
-        TraceLog(LOG_ERROR, "Cannot allocate memory for buffers");
-
-    /*int testBuff[9] =
-    {
-        1,0,3,
-        2,0,2,
-        0,1,0
-    };
-    int n[9] = { 1,2,3,4,5,6,7,8,9 };
-    GetNeighbors(testBuff, (Vector2) { 2, 2 }, &n, (Vector2) { 3, 3 });
-    TraceLog(LOG_INFO, TextFormat("test n - %d", n));*/
 
     // set window size according to grid and cell sizes
     screenCentre = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
@@ -201,10 +202,10 @@ void UpdateGameplayScreen(void)
     if (IsKeyPressed(KEY_SPACE))                    paused = !paused;
     if (IsKeyPressed(KEY_ENTER))                    RandomizeCells();
     // TODO: redo mouse cam controls
-    if (IsKeyDown(KEY_UP))      camera.target = (Vector2){ camera.target.x, camera.target.y - 10 };
-    if (IsKeyDown(KEY_DOWN))    camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
-    if (IsKeyDown(KEY_LEFT))    camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
-    if (IsKeyDown(KEY_RIGHT))   camera.target = (Vector2){ camera.target.x + 10, camera.target.y };
+    if (IsKeyDown(KEY_W))      camera.target = (Vector2){ camera.target.x, camera.target.y - 10 };
+    if (IsKeyDown(KEY_S))    camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
+    if (IsKeyDown(KEY_A))    camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
+    if (IsKeyDown(KEY_D))   camera.target = (Vector2){ camera.target.x + 10, camera.target.y };
     
     if (IsKeyPressed(KEY_C))
         CellsCount(currentState, (sizeof(currentState) / sizeof(currentState[0])));
@@ -221,7 +222,7 @@ void UpdateGameplayScreen(void)
     if (camera.zoom > 10.0f) camera.zoom = 10.0f;
     else if (camera.zoom < 0.1f) camera.zoom = 0.1f;
 
-    if (paused) 
+    if (paused)
     {
         if (IsKeyPressed(KEY_G))
             PassGeneration();
@@ -235,8 +236,6 @@ void UpdateGameplayScreen(void)
             ticksCount++;
         }
     }
-
-
 }
 
 // Maybe use some culling(texture is too big)
@@ -248,8 +247,6 @@ void RenderGridToTexture(RenderTexture2D rt)
             for (int i = 0; i < GAME_WIDTH; i++) {
                 int x = renderScale * i * CELL_SIZE;
                 int y = renderScale * j * CELL_SIZE;
-                /*int w = CELL_SIZE;
-                int h = CELL_SIZE;*/
 
                 tx_v = (Vector2){ x, y };
 
@@ -263,21 +260,30 @@ void RenderGridToTexture(RenderTexture2D rt)
     EndTextureMode();
 }
 
+void DrawSummary()
+{
+    paused = true;
+    if (GuiWindowBox((Rectangle) { screenCentre.x, screenCentre.y, 200, 200 }, "Summary"))
+    {
+        finishScreen = 1;
+    }
+}
+
 void RenderGUI() 
 {
-    //ClearBackground(BLACK);
-    //GuiPanel((Rectangle) { 0, 0, 300, screenHeight });
-    //if (GuiButton((Rectangle) { 10, 100, 100, 120 }, "#152#"))
-        // SpawnFigure(0, 0);
-    
     paused = GuiToggle((Rectangle) { 30, 30, 120, 60 }, "#132#", paused);
 
     if (GuiButton((Rectangle) { 30, 90, 120, 60 }, "#134#"))
         PassGeneration();
 
+    //ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
+
     DrawText(TextFormat("Epoch - %d", ticksCount), 500, 10, 28, RAYWHITE);
 
-    if (DEBUG_BUILD) 
+    if (ticksCount > EPOCH_LIMITS)
+        DrawSummary();
+
+    if (DEBUG_BUILD)
     {
         if (GuiButton((Rectangle) { 30, 150, 120, 60 }, "#79#"))
             WipeGrid(0);
@@ -290,11 +296,11 @@ void RenderGUI()
         for (int i = 0; i < NEIGHBORS_COUNT; ++i)
         {
             // TODO: rewrite for values more that 1 (0,1,2,3...)
-            if (stay_rule[i] == 1)
+            if (pStillRule[i] == 1)
             {
                 strcat_s(s_str, sizeof(s_str), TextFormat("%d", i));
             }
-            if (birth_rule[i] == 1)
+            if (pBirthRule[i] == 1)
             {
                 strcat_s(b_str, sizeof(b_str), TextFormat("%d", i));
             }
@@ -330,9 +336,6 @@ void UnloadGameplayScreen(void)
     // TODO: Unload GAMEPLAY screen variables here!
     UnloadRenderTexture(rt2D);
     UnloadTexture(tx);
-    //WTF?
-    MemFree(*nextState);
-    MemFree(*currentState);
 }
 
 // Gameplay Screen should finish?
