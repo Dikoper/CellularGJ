@@ -7,11 +7,11 @@
 
 #include <string.h>
 
-#define M 2 //multiplyer
+#define M 8 //multiplyer
 
 #define CELL_SIZE 32/M     // cell size
-#define GAME_WIDTH 48*M     // grid width
-#define GAME_HEIGHT 32*M     // grid height
+#define GAME_WIDTH 42*M     // grid width
+#define GAME_HEIGHT 24*M    // grid height
 
 #define GRID_X 5
 #define GRID_Y 8

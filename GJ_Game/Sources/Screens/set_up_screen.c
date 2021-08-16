@@ -57,7 +57,7 @@ void DrawGrid(Rectangle rec,int cellSize)
         for (int j = 0; j < rec.height; j++)
         {
             int idx = i * (int)rec.height + j;
-            Rectangle c_rc = { x + i * cellSize, y + j * cellSize, pd, pd };
+            Rectangle c_rc = { x + i * cellSize * 2, y + j * cellSize *1.2, pd*2, pd*1.2 };
             initFigure[idx] = GuiCheckBox(c_rc, "", initFigure[idx]);
         }
     }
@@ -66,35 +66,46 @@ void DrawGrid(Rectangle rec,int cellSize)
 // Setup Screen Draw logic
 void DrawSetupScreen(void)
 {
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
+
+    DrawTextEx(font, "STILL", (Vector2) { 620, 50 }, font.baseSize * 2, 3, GRAY);
     //stay
-    for (int i=0 ; i < NEIGHBORS_COUNT; ++i) 
+    for (int i=0 ; i < 3; ++i) 
     {
-        GuiSpinner((Rectangle) { 20 + i * 120, 0, 100, 25 }, TextFormat("s%d", i), &pStillRule[i], 0, 2, false);
+        for (size_t j = 0; j < 3; j++)
+        {
+            GuiSpinner((Rectangle) { 450 + 20 + i * 120, 100 + j * 50, 100, 25 }, TextFormat("s%d", j*3+i), &pStillRule[j * 3 + i], 0, 2, false);
+        }
+        
     }
+    DrawTextEx(font, "BIRTH", (Vector2) { 1040, 50 }, font.baseSize * 2, 3, GRAY);
     //birth
-    for (int i = 0; i < NEIGHBORS_COUNT; ++i)
+    for (int i = 0; i < 3; ++i)
     {
-        GuiSpinner((Rectangle) { 20 + i * 120, 25, 100, 25 }, TextFormat("b%d", i), &pBirthRule[i], 0, 2, false);
+        for (size_t j = 0; j < 3; j++)
+        {
+            GuiSpinner((Rectangle) { 875 + 20 + i * 120, 100 + j * 50, 100, 25 }, TextFormat("b%d", j*3 +i), &pBirthRule[j * 3 + i], 0, 2, false);
+        }
+
     }
 
-    DrawGrid((Rectangle) { 10, 100, GRID_X, GRID_Y}, 32);
-    GuiGroupBox((Rectangle) { 10, 100, GRID_X * 32, GRID_Y * 32 }, "Figure");
+    DrawGrid((Rectangle) { 55, 105, GRID_X, GRID_Y}, 32);
+    GuiGroupBox((Rectangle) { 50, 100, GRID_X * 32 * 2 + 10, GRID_Y * 32 * 1.2 +10}, "Figure");
 
     const char* controlsText =
-        "Game controls :"
-        "\n Use arrow keys to move camera"
+        "Choose your tactics of BIRTH and STILL to unleash the alien's capabilities"
+        "\nTry to build different life forms in figure window"
+        "\n\nGame controls :"
+        "\n Use WASD keys to move"
         "\n Use mouse wheel to zoom in(out)"
         "\n Press pause button to pause game"
-        "\n Press next button to pass one generation"
-        "\n Press r key to wipe all cells"
-        "\n Press figure key to spawn figure (glider)"
-        "\n Press enter key to generate new cells";
-        "\n Press escape key to get back to title screen";
+        "\n Press Play button to speed up"
+        "\n Press escape key to get back";
 
-    DrawText(controlsText, SCREEN_CENTRE.x - 300, GetScreenHeight()-200, 14, DARKGRAY);
+    DrawText(controlsText, 50, 425, 20, DARKGRAY);
 
     // TODO: Draw OPTIONS screen here!
-    if (GuiButton((Rectangle) { SCREEN_CENTRE.x, SCREEN_CENTRE.y, 400, 250 }, "Process to game"))
+    if (GuiButton((Rectangle) { GetScreenWidth() - 350, GetScreenHeight() - 150, 300, 125 }, "Start experiment.."))
     {
         finishScreen = 1;
     }

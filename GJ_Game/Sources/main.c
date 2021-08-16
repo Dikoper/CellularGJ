@@ -24,7 +24,7 @@ GameScreen currentScreen = 0;
 Font font = { 0 };
 Music music = { 0 };
 Sound fxCoin = { 0 };
-const char* GAME_TITLE = "Cellular game";
+const char* GAME_TITLE = "CELL SHOCK";
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
@@ -60,12 +60,18 @@ int main(void)
     SetExitKey(KEY_PAUSE);
     InitAudioDevice();      // Initialize audio device
     font = LoadFont("Resources/Fonts/mecha.png");
+    music = LoadMusicStream("Resources/Music/full_theme.ogg");
+
+    SetMusicVolume(music, 1.0f);
+    PlayMusicStream(music);
+
     currentScreen = TITLE;
     InitTitleScreen();
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         UpdateDrawFrame();
+        UpdateMusicStream(music);
     }
 
     // De-Initialization

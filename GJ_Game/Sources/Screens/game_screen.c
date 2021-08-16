@@ -11,8 +11,8 @@
 #include "raymath.h"
 #include <string.h>
 
-#define EPOCH_LIMITS 10
-#define DEBUG_BUILD true
+#define EPOCH_LIMITS 1000
+#define DEBUG_BUILD false
 
 //----------------------------------------------------------------------------------
 // Module Variables Definition (local)
@@ -21,7 +21,7 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
-static int ticks = 1;
+static int ticks = 15;
 #define TICKRATE 1000 / 1 / 1000 // update grid X times in a second
 
 double lastTick = 0;
@@ -82,6 +82,14 @@ void RandomizeFigure(int* fig, int type)
     }
 }
 
+void RandomizeRule(int* r)
+{
+    for (int i = 0; i < NEIGHBORS_COUNT; i++)
+    {
+        r[i] = GetRandomValue(0, 1);
+    }
+}
+
 void PassGeneration() {
     for (int j = 0; j < GAME_HEIGHT; j++) 
     {
@@ -93,16 +101,9 @@ void PassGeneration() {
  
             nextState[indx] = DEAD_CELL;//default state is death
             
-            if (currentState[indx] == PLAYER_CELL)
-            {
-                StayBHV(&nextState[indx], currentState[indx], &nb, pStillRule);
-                BirthBHV(&nextState[indx], currentState[indx], &nb, pBirthRule);
-            }
-            else
-            {
-                StayBHV(&nextState[indx], currentState[indx], &nb, pStillRule);
-                BirthBHV(&nextState[indx], currentState[indx], &nb, pBirthRule);
-            }
+            StayBHV(&nextState[indx], currentState[indx], &nb, pStillRule);
+            BirthBHV(&nextState[indx], currentState[indx], &nb, pBirthRule);
+
         }
     }
     // TODO: delete mem copy
@@ -140,15 +141,15 @@ void InitCells() {
 
     WipeGrid(0);
     // Player
-    SpawnFigure(&initFigure, 0, 0, PLAYER_CELL);
+    SpawnFigure(&initFigure, 10, 10, PLAYER_CELL);
 
     // ENEMY
     RandomizeFigure(&rndFig, ENEMY_CELL);
-    SpawnFigure(&rndFig, GAME_WIDTH - GRID_X, GAME_HEIGHT - GRID_Y, ENEMY_CELL);
+    SpawnFigure(&rndFig, GAME_WIDTH - GRID_X-10, GAME_HEIGHT - GRID_Y-10, ENEMY_CELL);
 
 
-   // RandomizeFigure(&eBirthRule, ENEMY_CELL);//bug
-   // RandomizeFigure(&eStillRule, ENEMY_CELL);//
+    //RandomizeRule(&eBirthRule);//bug
+   // RandomizeRule(&eStillRule);//
 }
 
 //----------------------------------------------------------------------------------
@@ -166,10 +167,10 @@ void InitGameplayScreen(void)
     //lastTick = 0;
     paused = false;
 
-    int textureWidth = (GAME_WIDTH * CELL_SIZE) >= 1280 ? GAME_WIDTH * CELL_SIZE : 1280;
+    int textureWidth = (GAME_WIDTH * CELL_SIZE)>= 1280 ? GAME_WIDTH * CELL_SIZE : 1280;
     int textureHeight = (GAME_HEIGHT * CELL_SIZE) >= 720 ? GAME_HEIGHT * CELL_SIZE : 720;
-    int screenWidth = 1280;
-    int screenHeight = 720;
+    int screenWidth =  1280;
+    int screenHeight =  720;
 
     rt2D = LoadRenderTexture(textureWidth * renderScale, textureHeight * renderScale);
     tx = LoadTexture("Resources/Images/cell.png");
@@ -184,10 +185,10 @@ void InitGameplayScreen(void)
 
     InitCells();
     // set virtual camera
-    camera.target = screenCentre;
-    camera.offset = screenCentre;
+    camera.target = (Vector2){ textureWidth / 2.0f, textureHeight / 2.0f +125 };
+    camera.offset = (Vector2){ textureWidth / 2.0f, textureHeight / 2.0f, };
     camera.rotation = 0.0f;
-    camera.zoom = 1.0f;
+    camera.zoom = 0.8f;
 
     running = true;
 }
@@ -211,9 +212,7 @@ void UpdateGameplayScreen(void)
     if (IsKeyDown(KEY_S))    camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
     if (IsKeyDown(KEY_A))    camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
     if (IsKeyDown(KEY_D))   camera.target = (Vector2){ camera.target.x + 10, camera.target.y };
-    
-    if (IsKeyPressed(KEY_C))
-        CellsCount(currentState, (sizeof(currentState) / sizeof(currentState[0])));
+        
     // Camera zoom controls
     if ((GetMouseWheelMove() > 0.1f))
     {
@@ -234,7 +233,7 @@ void UpdateGameplayScreen(void)
     }
     else
     {
-        if (GetTime() - lastTick > (float)TICKRATE * ticks)
+        if (GetTime() - lastTick > (float)1 / ticks)
         {
             PassGeneration();
             lastTick = GetTime();
@@ -268,22 +267,29 @@ void RenderGridToTexture(RenderTexture2D rt)
 void DrawSummary()
 {
     paused = true;
-    if (GuiWindowBox((Rectangle) { screenCentre.x, screenCentre.y, 200, 200 }, "Summary"))
+    if (GuiWindowBox((Rectangle) { screenCentre.x, screenCentre.y, 320, 240 }, "Summary"))
     {
         finishScreen = 1;
     }
+
+    int* c = CellsCount(currentState, (sizeof(currentState) / sizeof(currentState[0])));
+
+    DrawText(TextFormat("Experiment is over! \n\n \tClear cells - %d \n \tAlien cells - %d", c[1],c[2]), screenCentre.x+35, screenCentre.y+50, 28, DARKGRAY);
 }
 
 void RenderGUI() 
 {
-    paused = GuiToggle((Rectangle) { 30, 30, 120, 60 }, "#132#", paused);
+    paused = GuiToggle((Rectangle) { 30, 60, 40, 15 }, "#132#", paused);
 
-    if (GuiButton((Rectangle) { 30, 90, 120, 60 }, "#134#"))
-        PassGeneration();
+    if (GuiButton((Rectangle) { 30, 80, 40, 15 }, "#129#"))
+        ticks = ticks < 15 ? 15 : 1;//PassGeneration();
 
-    ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
+    if (GuiButton((Rectangle) { 30, 100, 40, 15 }, "#133#"))
+        RandomizeCells();
 
-    DrawText(TextFormat("Epoch - %d", ticksCount), 500, 10, 28, RAYWHITE);
+    //ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
+
+    DrawText(TextFormat("Epoch - %d", ticksCount), 30, 30, 28, RAYWHITE);
 
     if (ticksCount > EPOCH_LIMITS)
         DrawSummary();
@@ -316,8 +322,8 @@ void DrawGameplayScreen(void)
     RenderGridToTexture(rt2D);
 
     BeginMode2D(camera);
-        ClearBackground(GRAY);
-        DrawTextureEx(rt2D.texture, (Vector2) {0,0}, 0, 1, WHITE);
+        ClearBackground(BLACK);
+        DrawTextureEx(rt2D.texture, (Vector2) {10,100}, 0, 1, WHITE);
     EndMode2D();
     
     RenderGUI();

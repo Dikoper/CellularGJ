@@ -45,9 +45,9 @@ void UpdateTitleScreen(void)
 void DrawTitleScreen(void)
 {
     // TODO: Draw TITLE screen here!
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
-    DrawTextEx(font, GAME_TITLE, Vector2Add((Vector2) { -200, -200 }, SCREEN_CENTRE) , font.baseSize * 12, 3, DARKGREEN);
-    DrawTextEx(font, "PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", Vector2Add((Vector2) { -200, 0 }, SCREEN_CENTRE), font.baseSize * 3, 1, DARKGREEN);
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
+    DrawTextEx(font, GAME_TITLE, Vector2Add((Vector2) { -200, -200 }, SCREEN_CENTRE) , font.baseSize * 12, 3, GRAY);
+    DrawTextEx(font, "PRESS ENTER or Click to proceed", Vector2Add((Vector2) { -200, 0 }, SCREEN_CENTRE), font.baseSize * 3, 1, RAYWHITE);
 }
 
 // Title Screen Unload logic
