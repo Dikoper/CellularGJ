@@ -21,7 +21,7 @@
 static int framesCounter = 0;
 static int finishScreen = 0;
 
-static int ticks = 15;
+static int ticks = 30;
 #define TICKRATE 1000 / 1 / 1000 // update grid X times in a second
 
 double lastTick = 0;
@@ -254,11 +254,12 @@ void RenderGridToTexture(RenderTexture2D rt)
 
                 tx_v = (Vector2){ x, y };
 
-                if(nextState[j * GAME_WIDTH + i] == PLAYER_CELL)
-                    DrawTextureEx(tx, tx_v, 0, renderScale / M, GREEN);
+                if (nextState[j * GAME_WIDTH + i] == PLAYER_CELL)
+                    DrawRectangle(x, y, M-5, M-5, GREEN);
+                   // DrawRectangle(); //DrawTextureEx(tx, tx_v, 0, renderScale / M, GREEN); WTF? Textures problems?
                 else
                     if(nextState[j * GAME_WIDTH + i] == ENEMY_CELL)
-                        DrawTextureEx(tx, tx_v, 0, renderScale / M, RED);
+                        DrawRectangle(x, y, M-5, M-5, RED); //DrawTextureEx(tx, tx_v, 0, renderScale / M, RED);
             }
         }
     EndTextureMode();
@@ -282,7 +283,7 @@ void RenderGUI()
     paused = GuiToggle((Rectangle) { 30, 60, 40, 15 }, "#132#", paused);
 
     if (GuiButton((Rectangle) { 30, 80, 40, 15 }, "#129#"))
-        ticks = ticks < 15 ? 15 : 1;//PassGeneration();
+        ticks = ticks < 30 ? 30 : 1;//PassGeneration();
 
     if (GuiButton((Rectangle) { 30, 100, 40, 15 }, "#133#"))
         RandomizeCells();
