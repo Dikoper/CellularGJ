@@ -12,7 +12,7 @@
 #include <string.h>
 
 #define EPOCH_LIMITS 1000
-#define DEBUG_BUILD false
+#define DEBUG_BUILD true
 
 //----------------------------------------------------------------------------------
 // Module Variables Definition (local)
@@ -44,7 +44,7 @@ static bool running;
 static float renderScale = 1.0f;
 RenderTexture2D rt2D;
 
-RuleAttrib pStillRule, pBirthRule, eStillRule, eBirthRule;; // TODO: upgrade rules stuff
+RuleAttrib pStillRule, pBirthRule;
 
 static int nb[NEIGHBORS_COUNT] = {0};
 
@@ -146,10 +146,6 @@ void InitCells() {
     // ENEMY
     RandomizeFigure(&rndFig, ENEMY_CELL);
     SpawnFigure(&rndFig, GAME_WIDTH - GRID_X-10, GAME_HEIGHT - GRID_Y-10, ENEMY_CELL);
-
-
-    //RandomizeRule(&eBirthRule);//bug
-   // RandomizeRule(&eStillRule);//
 }
 
 //----------------------------------------------------------------------------------
@@ -162,9 +158,8 @@ void InitGameplayScreen(void)
     // TODO: Initialize GAMEPLAY screen variables here!
     framesCounter = 0;
     finishScreen = 0;
-
-    //ticks = 0.01f;
-    //lastTick = 0;
+    lastTick = 0;
+    ticksCount = 0;
     paused = false;
 
     int textureWidth = (GAME_WIDTH * CELL_SIZE)>= 1280 ? GAME_WIDTH * CELL_SIZE : 1280;
@@ -174,7 +169,6 @@ void InitGameplayScreen(void)
 
     rt2D = LoadRenderTexture(textureWidth * renderScale, textureHeight * renderScale);
     tx = LoadTexture("Resources/Images/cell.png");
-    //GuiLoadStyle("../Vendors/styles/cyber/cyber.rgs");
     rc = (Rectangle){ 100,200,100,201 };
 
     // set window size according to grid and cell sizes
@@ -196,21 +190,16 @@ void InitGameplayScreen(void)
 // Gameplay Screen Update logic
 void UpdateGameplayScreen(void)
 {
-    // TODO: Update GAMEPLAY screen variables here!
-
     // Press enter or tap to change to ENDING screen
     if (IsKeyPressed(KEY_ESCAPE))
-    {
-        finishScreen = 2;
-        //PlaySound(fxCoin);
-    }
+        finishScreen = SETUP;
     
-    if (IsKeyPressed(KEY_SPACE))                    paused = !paused;
-    if (IsKeyPressed(KEY_ENTER))                    RandomizeCells();
+    if (IsKeyPressed(KEY_SPACE))    paused = !paused;
+    if (IsKeyPressed(KEY_ENTER))    RandomizeCells();
     // TODO: redo mouse cam controls
-    if (IsKeyDown(KEY_W))      camera.target = (Vector2){ camera.target.x, camera.target.y - 10 };
-    if (IsKeyDown(KEY_S))    camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
-    if (IsKeyDown(KEY_A))    camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
+    if (IsKeyDown(KEY_W))   camera.target = (Vector2){ camera.target.x, camera.target.y - 10 };
+    if (IsKeyDown(KEY_S))   camera.target = (Vector2){ camera.target.x, camera.target.y + 10 };
+    if (IsKeyDown(KEY_A))   camera.target = (Vector2){ camera.target.x - 10, camera.target.y };
     if (IsKeyDown(KEY_D))   camera.target = (Vector2){ camera.target.x + 10, camera.target.y };
         
     // Camera zoom controls
@@ -255,11 +244,10 @@ void RenderGridToTexture(RenderTexture2D rt)
                 tx_v = (Vector2){ x, y };
 
                 if (nextState[j * GAME_WIDTH + i] == PLAYER_CELL)
-                    DrawRectangle(x, y, M-5, M-5, GREEN);
-                   // DrawRectangle(); //DrawTextureEx(tx, tx_v, 0, renderScale / M, GREEN); WTF? Textures problems?
+                    DrawTextureEx(tx, tx_v, 0, renderScale / M, GREEN); // WTF? Textures problems? //DrawRectangle(x, y, M-5, M-5, GREEN);
                 else
                     if(nextState[j * GAME_WIDTH + i] == ENEMY_CELL)
-                        DrawRectangle(x, y, M-5, M-5, RED); //DrawTextureEx(tx, tx_v, 0, renderScale / M, RED);
+                        DrawTextureEx(tx, tx_v, 0, renderScale / M, RED);
             }
         }
     EndTextureMode();
@@ -270,7 +258,7 @@ void DrawSummary()
     paused = true;
     if (GuiWindowBox((Rectangle) { screenCentre.x, screenCentre.y, 320, 240 }, "Summary"))
     {
-        finishScreen = 1;
+        finishScreen = TITLE;
     }
 
     int* c = CellsCount(currentState, (sizeof(currentState) / sizeof(currentState[0])));
@@ -280,17 +268,14 @@ void DrawSummary()
 
 void RenderGUI() 
 {
+    DrawText(TextFormat("Epoch - %d", ticksCount), 30, 30, 28, RAYWHITE);
     paused = GuiToggle((Rectangle) { 30, 60, 40, 15 }, "#132#", paused);
 
     if (GuiButton((Rectangle) { 30, 80, 40, 15 }, "#129#"))
-        ticks = ticks < 30 ? 30 : 1;//PassGeneration();
+        ticks = ticks < 30 ? 30 : 1;
 
     if (GuiButton((Rectangle) { 30, 100, 40, 15 }, "#133#"))
         RandomizeCells();
-
-    //ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
-
-    DrawText(TextFormat("Epoch - %d", ticksCount), 30, 30, 28, RAYWHITE);
 
     if (ticksCount > EPOCH_LIMITS)
         DrawSummary();
@@ -305,6 +290,8 @@ void RenderGUI()
 
         char s_str[10] = { 0 }, b_str[10] = { 0 };
 
+        ticks = GuiSlider((Rectangle) { 30, 300, 250, 10 }, "x1", "x30", ticks, 1, 30);
+
         RuleToText(pStillRule, sizeof(s_str), &s_str);
         RuleToText(pBirthRule, sizeof(b_str), &b_str);
 
@@ -317,8 +304,6 @@ void RenderGUI()
 // Gameplay Screen Draw logic
 void DrawGameplayScreen(void)
 {
-    // TODO: Draw GAMEPLAY screen here!
-
     // Screen draw
     RenderGridToTexture(rt2D);
 
@@ -333,7 +318,6 @@ void DrawGameplayScreen(void)
 // Gameplay Screen Unload logic
 void UnloadGameplayScreen(void)
 {
-    // TODO: Unload GAMEPLAY screen variables here!
     UnloadRenderTexture(rt2D);
     UnloadTexture(tx);
 }

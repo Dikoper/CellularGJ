@@ -9,7 +9,7 @@
 
 #define M 8 //multiplyer
 
-#define CELL_SIZE 32/M     // cell size
+#define CELL_SIZE 32/M      // cell size
 #define GAME_WIDTH 42*M     // grid width
 #define GAME_HEIGHT 24*M    // grid height
 
@@ -33,7 +33,7 @@ enum CellType
 typedef bool Figure[GRID_X * GRID_Y];
 
 typedef int RuleAttrib[NEIGHBORS_COUNT]; //zero index is the root(centre) cell
-extern RuleAttrib pStillRule, pBirthRule;
+extern RuleAttrib pStillRule, pBirthRule; // TODO: upgrade rules stuff
 extern Figure initFigure;
 
 static void RuleToText(int* rule, size_t size, char* out)

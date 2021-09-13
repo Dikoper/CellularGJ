@@ -131,9 +131,6 @@ static void ScreenUpdater(GameScreen gs)
             case TITLE:
             {
                 UpdateTitleScreen();
-
-                //if (FinishTitleScreen() == 1) TransitionToScreen(OPTIONS);
-                //else 
                 if (FinishTitleScreen() == 2) TransitionToScreen(SETUP);
 
             } break;
@@ -147,7 +144,6 @@ static void ScreenUpdater(GameScreen gs)
             case GAMEPLAY:
             {
                 UpdateGameplayScreen();
-
                 if (FinishGameplayScreen() == 1) TransitionToScreen(TITLE);
                 else 
                 if (FinishGameplayScreen() == 2) TransitionToScreen(SETUP);

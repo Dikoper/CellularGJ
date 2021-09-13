@@ -35,9 +35,7 @@ void UpdateTitleScreen(void)
     // Press enter or tap to change to GAMEPLAY screen
     if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
-        //finishScreen = 1;   // OPTIONS
         finishScreen = 2;   // GAMEPLAY
-        //PlaySound(fxCoin);
     }
 }
 
