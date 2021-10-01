@@ -1,6 +1,6 @@
 #pragma once
-
-extern const char* GAME_TITLE = "CELL ENGINE";
+#define DEBUG
+#define GAME_TITLE "TestGame"
 
 typedef struct 
 {   

@@ -50,11 +50,11 @@
     <ClInclude Include="Sources\Headers\components.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Headers\que.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Sources\Screens\game_screen.h">
       <Filter>Source Files\Screens</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\queue.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

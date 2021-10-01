@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef DEV.H
-#define DEV.H
+#ifndef DEV_H
+#define DEV_H
 
 Rectangle panelRect = { 0, 30, 200, 250 };
 bool isShown = true;

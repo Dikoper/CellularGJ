@@ -7,7 +7,7 @@
 
 #ifndef SCREENS_H
 #define SCREENS_H
-
+#include "settings.h"
 #define SCREEN_CENTRE (Vector2){GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}
 
 //----------------------------------------------------------------------------------
@@ -34,6 +34,5 @@ typedef struct GameScreen
 extern Font font;
 extern Music music;
 extern Sound fxSound;
-extern const char* GAME_TITLE;
 
 #endif // SCREENS_H

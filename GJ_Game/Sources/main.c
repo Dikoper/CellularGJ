@@ -6,7 +6,6 @@
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION 
 #define RAYGUI_SUPPORT_ICONS
-#define DEBUG
 #include "raygui.h"
 #include "./Headers/settings.h"
 #include "./Headers/screens.h"

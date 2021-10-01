@@ -174,7 +174,7 @@
     <ClInclude Include="Sources\Headers\devtools.h" />
     <ClInclude Include="Sources\Headers\extensions.h" />
     <ClInclude Include="Sources\Headers\objects.h" />
-    <ClInclude Include="Sources\Headers\que.h" />
+    <ClInclude Include="Sources\Headers\queue.h" />
     <ClInclude Include="Sources\Headers\scenes.h" />
     <ClInclude Include="Sources\Headers\screens.h" />
     <ClInclude Include="Sources\Headers\settings.h" />
