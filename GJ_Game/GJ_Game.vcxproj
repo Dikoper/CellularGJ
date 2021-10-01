@@ -168,11 +168,17 @@
     <ClCompile Include="Sources\main.c" />
     <ClCompile Include="Sources\Screens\game_screen.c" />
     <ClCompile Include="Sources\Screens\main_menu_screen.c" />
-    <ClCompile Include="Sources\Screens\set_up_screen.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Sources\Headers\components.h" />
+    <ClInclude Include="Sources\Headers\devtools.h" />
     <ClInclude Include="Sources\Headers\extensions.h" />
+    <ClInclude Include="Sources\Headers\objects.h" />
+    <ClInclude Include="Sources\Headers\que.h" />
+    <ClInclude Include="Sources\Headers\scenes.h" />
     <ClInclude Include="Sources\Headers\screens.h" />
+    <ClInclude Include="Sources\Headers\settings.h" />
+    <ClInclude Include="Sources\Screens\game_screen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

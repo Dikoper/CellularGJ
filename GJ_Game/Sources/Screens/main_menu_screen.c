@@ -3,16 +3,31 @@
 *   Title Screen Functions Definitions (Init, Update, Draw, Unload)
 *
 **********************************************************************************************/
-
 #include "raylib.h"
 #include "../Headers/screens.h"
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
 
+void InitTitleScreen(void);
+void UpdateTitleScreen(void);
+void DrawTitleScreen(void);
+void UnloadTitleScreen(void);
+int FinishTitleScreen(void);
+
+extern GameScreen main_menu_screen =
+{
+    TITLE,
+    NONE,
+    InitTitleScreen,
+    UpdateTitleScreen,
+    DrawTitleScreen,
+    UnloadTitleScreen,
+    FinishTitleScreen
+};
+
 //----------------------------------------------------------------------------------
 // Module Variables Definition (local)
 //----------------------------------------------------------------------------------
-static int framesCounter = 0;
 static int finishScreen = 0;
 
 //----------------------------------------------------------------------------------
@@ -23,7 +38,6 @@ static int finishScreen = 0;
 void InitTitleScreen(void)
 {
     // TODO: Initialize TITLE screen variables here!
-    framesCounter = 0;
     finishScreen = 0;
 }
 
@@ -33,7 +47,7 @@ void UpdateTitleScreen(void)
     // TODO: Update TITLE screen variables here!
 
     // Press enter or tap to change to GAMEPLAY screen
-    if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
+    if (IsKeyPressed(KEY_ENTER))
     {
         finishScreen = 2;   // GAMEPLAY
     }
@@ -43,9 +57,8 @@ void UpdateTitleScreen(void)
 void DrawTitleScreen(void)
 {
     // TODO: Draw TITLE screen here!
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK);
     DrawTextEx(font, GAME_TITLE, Vector2Add((Vector2) { -200, -200 }, SCREEN_CENTRE) , font.baseSize * 12, 3, GRAY);
-    DrawTextEx(font, "PRESS ENTER or Click to proceed", Vector2Add((Vector2) { -200, 0 }, SCREEN_CENTRE), font.baseSize * 3, 1, RAYWHITE);
+    DrawTextEx(font, "PRESS ENTER to proceed", Vector2Add((Vector2) { -200, 0 }, SCREEN_CENTRE), font.baseSize * 3, 1, RAYWHITE);
 }
 
 // Title Screen Unload logic
@@ -57,5 +70,6 @@ void UnloadTitleScreen(void)
 // Title Screen should finish?
 int FinishTitleScreen(void)
 {
+    main_menu_screen.state = FINISHING;
     return finishScreen;
 }

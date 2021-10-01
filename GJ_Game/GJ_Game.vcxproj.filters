@@ -21,13 +21,10 @@
     <ClCompile Include="Sources\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Screens\game_screen.c">
-      <Filter>Source Files\Screens</Filter>
-    </ClCompile>
     <ClCompile Include="Sources\Screens\main_menu_screen.c">
       <Filter>Source Files\Screens</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Screens\set_up_screen.c">
+    <ClCompile Include="Sources\Screens\game_screen.c">
       <Filter>Source Files\Screens</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,6 +34,27 @@
     </ClInclude>
     <ClInclude Include="Sources\Headers\screens.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\objects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\scenes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\devtools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\components.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Headers\que.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Screens\game_screen.h">
+      <Filter>Source Files\Screens</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
