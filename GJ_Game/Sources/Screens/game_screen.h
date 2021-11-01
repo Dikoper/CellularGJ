@@ -6,10 +6,10 @@
 #pragma once
 
 #include "raylib.h"
+#include "raymath.h"
 #include "../Headers/objects.h"
 #include "../Headers/screens.h"
-#define RAYMATH_IMPLEMENTATION
-#include "raymath.h"
+
 
 void InitGameScreen(void);
 void UpdateGameScreen(void);

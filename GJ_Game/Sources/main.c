@@ -4,15 +4,21 @@
 *
 ******************************************************************************/
 #include "raylib.h"
+#define PHYSAC_IMPLEMENTATION
+#include "physac.h"
+#define RAYMATH_IMPLEMENTATION
+#include "raymath.h"
 #define RAYGUI_IMPLEMENTATION 
 #define RAYGUI_SUPPORT_ICONS
 #include "raygui.h"
+
 #include "./Headers/settings.h"
 #include "./Headers/screens.h"
 #include "./Headers/objects.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #elif _MSC_VER
     #ifndef DEBUG
     //turn off console in Release mode in MSVC
@@ -45,7 +51,7 @@ GameScreen* screens[5];
 static void Initialization();
 static void GameLoop();
 static void Draw();
-static void Tick(dt);
+static void Tick(float);
 static void Deinitialization();
 
 //----------------------------------------------------------------------------------
@@ -69,13 +75,17 @@ static void Initialization()
 {
     InitWindow(default_settings.screenWidth, default_settings.screenHeight, GAME_TITLE);
     SetTargetFPS(default_settings.framerate);
+#ifdef __EMSCRIPTEN__
+    emscripten_set_canvas_element_size("canvas", default_settings.screenWidth, default_settings.screenHeight);
+#endif
     SetExitKey(KEY_PAUSE);
-    InitAudioDevice();      // Initialize audio device
-    font = LoadFont("Resources/Fonts/mecha.png");
-    music = LoadMusicStream("Resources/Music/full_theme.ogg");
 
-    SetMusicVolume(music, 1.0f);
-    PlayMusicStream(music);
+    InitAudioDevice();      // Initialize audio device
+    music = LoadMusicStream("Resources/Music/full_theme.ogg");
+    //SetMusicVolume(music, 1.0f);
+    //PlayMusicStream(music);
+
+    font = LoadFont("Resources/Fonts/mecha.png");
 
     screens[0] = &main_menu_screen;
     screens[1] = &game_screen;

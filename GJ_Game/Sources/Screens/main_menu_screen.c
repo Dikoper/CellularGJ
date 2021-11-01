@@ -5,7 +5,6 @@
 **********************************************************************************************/
 #include "raylib.h"
 #include "../Headers/screens.h"
-#define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
 
 void InitTitleScreen(void);

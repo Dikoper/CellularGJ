@@ -4,10 +4,7 @@
 *   scene contains objects tree and run dedicated scene script 
 *
 ******************************************************************************/
-
 #pragma once
-
-#include "raylib.h"
 #include "objects.h"
 
 #define MAX_NODES 256

@@ -4,7 +4,6 @@
 *   object is an atomic entity of the engine. it has position and activity state
 *
 ******************************************************************************/
-
 #pragma once
 
 #ifndef OBJECTS_H
@@ -32,7 +31,7 @@ static int GetStringHash(char* str, int length)
     int prime = 21;
     int hash = 0;
 
-    for (size_t i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
         hash += str[i] % prime;
     }
